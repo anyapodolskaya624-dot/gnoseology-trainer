@@ -31,6 +31,7 @@
   .opts{display:flex;flex-direction:column;gap:10px;}
   .opt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:13px 14px;font-size:15.5px;line-height:1.35;color:var(--ink);cursor:pointer;font-weight:600;}
   .opt .ic{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--mut);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px;}
+  .opt.multi .ic{border-radius:4px;}
   .opt.sel{border-color:var(--accent);}
   .opt.sel .ic{background:var(--accent);border-color:var(--accent);color:#fff;}
   .opt.correct{border-color:#e8eef5;background:#223344;}
@@ -542,7 +543,7 @@ function render(){
 
   const box=document.createElement("div");box.className="opts";
   shown.forEach((o,idx)=>{
-    const b=document.createElement("button");b.className="opt";
+    const b=document.createElement("button");b.className="opt"+(spec.multi?" multi":"");
     const isCorrect=spec.correct.has(o),isSel=picked.has(o);let icon,tag="";
     if(!answered){icon=isSel?"●":String.fromCharCode(65+idx);if(isSel)b.classList.add("sel");}
     else{
@@ -551,7 +552,11 @@ function render(){
       else if(!isCorrect&&isSel){b.classList.add("wrong");icon="✗";tag='<span class="tag">ваш выбор</span>';}
       else{b.classList.add("dim");icon=String.fromCharCode(65+idx);}
     }
-    b.innerHTML='<span class="ic">'+icon+'</span><span><span class="txt">'+esc(o)+'</span>'+tag+'</span>';
+    if(spec.multi){
+      icon=isSel?"✓":"";b.setAttribute("role","checkbox");b.setAttribute("aria-checked",String(isSel));b.disabled=answered;
+      if(isSel)b.classList.add("sel");
+    }
+    b.innerHTML='<span class="ic" aria-hidden="true">'+icon+'</span><span><span class="txt">'+esc(o)+'</span>'+tag+'</span>';
     if(!answered)b.onclick=()=>{if(spec.multi){if(picked.has(o))picked.delete(o);else picked.add(o);render();}else{picked=new Set([o]);grade(card);}};
     box.appendChild(b);
   });
@@ -693,7 +698,9 @@ function renderExam(){
     const options=document.createElement("div");options.className="opts";
     shown.forEach((option,index)=>{
       const selected=picked.has(option),button=document.createElement("button");
-      button.className="opt"+(selected?" sel":"");button.setAttribute("aria-pressed",String(selected));
+      button.className="opt"+(spec.multi?" multi":"")+(selected?" sel":"");
+      if(spec.multi){button.setAttribute("role","checkbox");button.setAttribute("aria-checked",String(selected));}
+      else button.setAttribute("aria-pressed",String(selected));
       let label="";
       if(examFeedback){
         button.disabled=true;
@@ -701,7 +708,8 @@ function renderExam(){
         else if(selected){button.classList.add("wrong");label="Лишний вариант";}
         else button.classList.add("dim");
       }
-      button.innerHTML='<span class="ic" aria-hidden="true">'+(selected?'●':String.fromCharCode(65+index))+'</span><span><span class="txt">'+esc(option)+'</span>'+(label?'<span class="tag">'+label+'</span>':'')+'</span>';
+      const icon=spec.multi?(selected?"✓":""):(selected?"●":String.fromCharCode(65+index));
+      button.innerHTML='<span class="ic" aria-hidden="true">'+icon+'</span><span><span class="txt">'+esc(option)+'</span>'+(label?'<span class="tag">'+label+'</span>':'')+'</span>';
       if(!examFeedback)button.onclick=()=>{if(examFeedback)return;if(spec.multi){if(picked.has(option))picked.delete(option);else picked.add(option);}else picked=new Set([option]);renderExam();};
       options.appendChild(button);
     });
