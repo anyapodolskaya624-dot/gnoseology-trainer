@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Тренажёр – Гносеология ИИС</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :root{--bg:#0f1720;--panel:#16212e;--card:#1c2a3a;--ink:#eef3f8;--mut:#9fb1c4;--line:#2a3a4d;--accent:#3b82f6;}
+  html,body{margin:0;min-width:0;}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;display:flex;flex-direction:column;min-height:100vh;min-height:100svh;}
+  header{padding:12px 16px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5;}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  h1{font-size:16px;margin:0;font-weight:700;}
+  .modes{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .modes button{background:transparent;color:var(--mut);border:none;padding:7px 12px;font-size:13px;font-weight:700;cursor:pointer;}
+  .modes button.on{background:var(--accent);color:#fff;}
+  .topics{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
+  .topics[hidden]{display:none;}
+  .topics::-webkit-scrollbar{display:none;}
+  .chip{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--mut);padding:7px 12px;border-radius:999px;font-size:13px;white-space:nowrap;cursor:pointer;font-weight:600;}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .bar{height:6px;background:var(--panel);border-radius:999px;margin:10px 0 2px;overflow:hidden;}
+  .bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s;}
+  .stat{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:4px;}
+  main{flex:1;display:flex;flex-direction:column;padding:16px;gap:12px;}
+  .badge{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--mut);border:1px solid var(--line);border-radius:6px;padding:3px 8px;}
+  .q{font-size:18px;line-height:1.45;font-weight:700;margin:4px 0 2px;}
+  .hintmulti{font-size:12.5px;color:var(--mut);margin-bottom:4px;}
+  .opts{display:flex;flex-direction:column;gap:10px;}
+  .opt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:13px 14px;font-size:15.5px;line-height:1.35;color:var(--ink);cursor:pointer;font-weight:600;}
+  .opt .ic{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--mut);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px;}
+  .opt.sel{border-color:var(--accent);}
+  .opt.sel .ic{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .opt.correct{border-color:#e8eef5;background:#223344;}
+  .opt.correct .ic{background:#e8eef5;color:#16212e;border-color:#e8eef5;}
+  .opt.missed{border-color:#9fb1c4;border-style:dashed;}
+  .opt.missed .ic{background:transparent;color:#cfeefe;border-color:#cfeefe;}
+  .opt.wrong{opacity:.92;border-style:dashed;}
+  .opt.wrong .txt{text-decoration:line-through;color:var(--mut);}
+  .opt.wrong .ic{border-color:var(--mut);color:var(--mut);}
+  .opt.dim{opacity:.4;}
+  .opt .tag{display:block;font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-top:4px;color:var(--mut);}
+  .opt.correct .tag{color:#dfe8f2;}
+  .flag{font-size:13px;line-height:1.4;background:#241a0d;border:1px solid #4a3411;border-radius:10px;padding:10px 12px;color:#f0c98b;}
+  .next,.check{margin-top:4px;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;width:100%;}
+  .check[disabled]{opacity:.4;}
+  .reveal-btn{margin-top:8px;background:#243244;color:#fff;border:1px solid var(--line);border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;width:100%;}
+  .ansbox{margin-top:8px;background:#223344;border:2px solid #e8eef5;border-radius:14px;padding:14px;}
+  .ansbox .lab{font-size:12px;color:#dfe8f2;font-weight:700;margin-bottom:5px;}
+  .ansbox .val{font-size:17px;font-weight:800;line-height:1.4;}
+  .selfrow{display:flex;gap:10px;margin-top:10px;}
+  .selfrow button{flex:1;border-radius:14px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;}
+  .self-yes{background:var(--accent);color:#fff;border:none;}
+  .self-no{background:transparent;color:var(--ink);border:2px solid var(--line);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 18px;min-height:36vh;display:flex;flex-direction:column;cursor:pointer;}
+  .hint{margin-top:auto;color:var(--mut);font-size:13px;padding-top:14px;text-align:center;}
+  .ans{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line);}
+  .ans .lab{font-size:12px;color:var(--mut);font-weight:700;margin-bottom:6px;}
+  .ans .val{font-size:18px;font-weight:800;line-height:1.4;}
+  .btns{display:flex;gap:10px;}
+  .btn{flex:1;border:none;border-radius:14px;padding:16px 10px;font-size:15px;font-weight:700;cursor:pointer;}
+  .btn.know{background:var(--accent);color:#fff;}
+  .btn.again{background:transparent;color:var(--ink);border:2px solid var(--line);}
+  .done{text-align:center;padding:24px 8px;}
+  .done h2{font-size:21px;margin:0 0 6px;}
+  .done .score{font-size:38px;font-weight:800;margin:8px 0;}
+  .done p{color:var(--mut);font-size:15px;line-height:1.5;}
+  .restart{margin-top:16px;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:14px 22px;font-size:15px;font-weight:700;cursor:pointer;}
+  .ghost{margin-top:10px;background:transparent;color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:13px 22px;font-size:15px;font-weight:700;cursor:pointer;display:block;width:100%;}
+  .tiny{font-size:12px;color:var(--mut);text-align:center;padding:6px 16px 16px;}
+  .exam-panel{width:100%;max-width:800px;margin:0 auto;}
+  .exam-intro{padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--card);}
+  .exam-intro h2{margin:0 0 12px;font-size:24px;}
+  .exam-intro p,.exam-intro li{line-height:1.6;color:var(--mut);}
+  .exam-intro ul{padding-left:22px;}
+  .exam-input{width:100%;margin-top:10px;border:2px solid var(--line);border-radius:12px;padding:14px;background:var(--card);color:var(--ink);font:inherit;font-size:17px;}
+  .exam-input:focus{outline:2px solid var(--accent);outline-offset:2px;}
+  .exam-actions{display:flex;gap:10px;margin-top:16px;}
+  .exam-actions button{flex:1;margin:0;}
+  .exam-feedback{margin-top:18px;padding:18px;border:2px solid var(--line);border-radius:14px;overflow-wrap:anywhere;}
+  .exam-feedback.is-correct{background:#122d29;border-color:#4ba58d;}
+  .exam-feedback.is-wrong{background:#32212a;border-color:#c17b8f;}
+  .exam-feedback h3{margin:0 0 12px;font-size:22px;}
+  .exam-feedback p,.explanation p{line-height:1.6;margin:10px 0;}
+  .explanation{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+  .explanation h4{font-size:16px;margin:0 0 8px;}
+  .explanation a{color:#b9d8ff;}
+  .explanation .flag{margin-top:12px;}
+  .exam-feedback:focus{outline:2px solid var(--ink);outline-offset:3px;}
+  .opt:disabled{cursor:default;}
+  .next:disabled{opacity:.45;cursor:default;}
+  .topic-results{width:100%;border-collapse:collapse;margin:18px 0;text-align:left;}
+  .topic-results caption{text-align:left;font-size:18px;font-weight:700;padding-bottom:10px;}
+  .topic-results th,.topic-results td{padding:12px 8px;border-bottom:1px solid var(--line);}
+  .topic-results th:last-child,.topic-results td:last-child{text-align:right;white-space:nowrap;}
+  .exam-review{padding:16px;margin:12px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);text-align:left;overflow-wrap:anywhere;}
+  .exam-review summary{cursor:pointer;font-weight:600;line-height:1.5;}
+  .exam-review p{line-height:1.5;}
+  .exam-review .flag{margin-top:12px;}
+  .exam-note{font-size:13px;line-height:1.5;color:var(--mut);}
+  /* Гибкая ширина и безопасные отступы, в том числе при повороте телефона. */
+  header,main,.tiny{width:100%;min-width:0;}
+  header{padding-top:max(12px,env(safe-area-inset-top));padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));}
+  main{max-width:900px;margin:0 auto;overflow-wrap:anywhere;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));}
+  .tiny{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:max(16px,env(safe-area-inset-bottom));overflow-wrap:anywhere;}
+  .top{flex-wrap:wrap;}
+  .top>*,.modes,.modes button,.exam-panel,.card,.opts,.exam-input{min-width:0;}
+  .modes button{white-space:normal;overflow-wrap:anywhere;}
+  .badge{max-width:100%;overflow-wrap:anywhere;}
+  .opt>span:last-child{flex:1;min-width:0;overflow-wrap:anywhere;}
+  .stat{flex-wrap:wrap;gap:4px 12px;}
+  button,.chip{touch-action:manipulation;}
+  button:focus-visible{outline:2px solid var(--ink);outline-offset:3px;}
+  .modes button:focus-visible{outline-offset:-3px;}
+  .exam-input{max-width:100%;}
+  .topic-results{table-layout:fixed;}
+  .topic-results th:first-child{overflow-wrap:anywhere;}
+  .topic-results th:last-child,.topic-results td:last-child{width:112px;}
+  .exam-review summary{min-height:44px;padding:6px 0;}
+
+  @media(max-width:600px){
+    body{font-size:16px;}
+    header{position:static;padding:10px 12px 8px;padding-top:max(10px,env(safe-area-inset-top));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));}
+    .top{display:block;margin-bottom:8px;}
+    h1{font-size:15px;line-height:1.4;margin-bottom:8px;}
+    .modes{display:grid;grid-template-columns:1.2fr 1.1fr 1fr;width:100%;}
+    .modes button{min-height:48px;padding:8px 6px;font-size:13px;line-height:1.3;}
+    .topics{padding-bottom:6px;}
+    .chip{display:flex;align-items:center;min-height:44px;padding:8px 12px;}
+    .bar{margin-top:8px;}
+    .stat{font-size:13px;line-height:1.4;}
+    main{padding:14px 12px 20px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));gap:12px;}
+    .q{font-size:19px;line-height:1.5;margin:10px 0;}
+    .badge{font-size:11px;line-height:1.4;letter-spacing:.2px;}
+    .hintmulti,.exam-note,.hint{font-size:14px;line-height:1.5;}
+    .opt{min-height:52px;padding:13px 12px;gap:10px;font-size:16px;line-height:1.5;border-radius:12px;}
+    .opt .tag{font-size:12px;line-height:1.4;}
+    .card,.exam-intro{padding:18px 14px;min-height:0;border-radius:14px;}
+    .exam-intro h2{font-size:22px;line-height:1.3;}
+    .exam-intro ul{padding-left:20px;}
+    .exam-intro li+li{margin-top:8px;}
+    .exam-input{min-height:52px;font-size:18px;padding:12px;}
+    .exam-actions,.selfrow,.btns{flex-direction:column;gap:10px;}
+    .next,.check,.ghost,.restart,.reveal-btn,.btn,.selfrow button{width:100%;min-height:50px;padding:14px 12px;font-size:16px;line-height:1.4;white-space:normal;overflow-wrap:anywhere;}
+    .exam-feedback,.exam-review{padding:16px 12px;border-radius:12px;}
+    .exam-feedback{scroll-margin:12px;}
+    .exam-feedback h3{font-size:20px;line-height:1.4;}
+    .exam-feedback p,.explanation p,.exam-review p{font-size:16px;line-height:1.6;}
+    .flag{font-size:14px;line-height:1.5;padding:10px;}
+    .ansbox{padding:12px;}
+    .ans .val,.ansbox .val{font-size:18px;line-height:1.5;}
+    .topic-results{font-size:14px;}
+    .topic-results th,.topic-results td{padding:12px 6px;vertical-align:top;}
+    .topic-results th:last-child,.topic-results td:last-child{width:96px;}
+    .done{padding:18px 0;}
+    .done h2{font-size:22px;line-height:1.35;}
+    .done p{font-size:16px;}
+    .tiny{font-size:12px;line-height:1.5;}
+  }
+  @media(max-height:500px) and (orientation:landscape){header{position:static;}.card{min-height:0;}}
+  @media(prefers-reduced-motion:reduce){.bar>i{transition:none;}}
+  [hidden]{display:none!important;}
+  .profile-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0;}
+  #active-profile-name{min-width:0;font-size:14px;font-weight:600;overflow-wrap:anywhere;}
+  .small-button{flex-shrink:0;min-height:44px;border:1px solid var(--line);border-radius:10px;padding:9px 12px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;cursor:pointer;}
+  button:disabled{cursor:default;}
+  .small-button:disabled,.modes button:disabled{opacity:.45;}
+  .profile-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px;margin:16px 0;}
+  .profile-choice{min-height:64px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);text-align:left;font:inherit;cursor:pointer;overflow-wrap:anywhere;}
+  .profile-choice strong{display:block;font-size:18px;}
+  .profile-choice span{display:block;margin-top:5px;font-size:13px;color:var(--mut);}
+  .profile-form{padding:18px;margin-top:20px;border:1px solid var(--line);border-radius:14px;background:var(--card);}
+  .profile-form h3{margin-top:0;}
+  .profile-form label{display:block;line-height:1.5;}
+  .profile-form .next{margin-top:12px;}
+  .profile-error{margin:14px 0;}
+  .stats-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0;}
+  .stats-card{padding:16px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);}
+  .stats-card strong{display:block;font-size:26px;line-height:1.3;}
+  .stats-card span{display:block;margin-top:6px;color:var(--mut);font-size:13px;line-height:1.4;}
+  .stats-section{margin-top:28px;}
+  .stats-section h3{margin-bottom:10px;}
+  .history-list,.ranking-list{list-style:none;padding:0;margin:12px 0;}
+  .history-row,.ranking-row{padding:14px 12px;margin-top:10px;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow-wrap:anywhere;}
+  .history-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:start;}
+  .history-score{font-size:20px;font-weight:700;text-align:right;}
+  .history-meta{grid-column:1 / -1;font-size:13px;line-height:1.5;color:var(--mut);}
+  .ranking-row p{margin:7px 0 0;line-height:1.5;}
+  .ranking-count{font-weight:700;color:#ffd1da;}
+  .rank-meter{height:6px;margin-top:10px;background:var(--panel);border-radius:6px;overflow:hidden;}
+  .rank-meter span{display:block;height:100%;background:#c17b8f;}
+  .save-status{padding:12px;border:1px solid var(--line);border-radius:10px;margin:14px 0;line-height:1.5;}
+  .save-status.saved{color:#bce8da;background:#122d29;}
+  @media(max-width:600px){
+    .modes{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .profile-toolbar{gap:8px;}
+    #active-profile-name{font-size:13px;}
+    .small-button{font-size:13px;padding:8px 10px;}
+    .profile-form{padding:16px 12px;}
+    .stats-cards{gap:6px;}
+    .stats-card{padding:12px 8px;}
+    .stats-card strong{font-size:21px;}
+    .stats-card span{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Гносеология ИИС</h1>
+    <div class="modes" id="modes">
+      <button data-m="exam" class="on">Пробный тест: 54</button>
+      <button data-m="quiz">Тест по темам</button>
+      <button data-m="cards">Карточки</button>
+      <button data-m="stats">Статистика</button>
+    </div>
+  </div>
+  <div class="profile-toolbar" id="profile-toolbar" hidden>
+    <span id="active-profile-name"></span>
+    <button class="small-button" id="change-profile">Сменить профиль</button>
+  </div>
+  <div class="topics" id="topics"></div>
+  <div class="bar"><i id="prog"></i></div>
+  <div class="stat"><span id="left">—</span><span id="sc">—</span></div>
+</header>
+<main id="main"></main>
+<div class="tiny">Варианты — как на реальном тесте. ✓ верный · ✗ неверный · ◌ пропущенный · ⚠ требует проверки</div>
+
+<script>
+const DATA = [{"q":"Объект: модель представления знаний, представленная в виде графа, узлы которого соответствуют понятиям и объектам предметной области, а дуги (рёбра) — взаимосвязям между объектами.","a":"Семантическая сеть","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Объект: модель представления знаний, которая содержит знания, о которых нельзя однозначно сказать, истинны они или ложны.","a":"Модель нечётких знаний","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Объект: модель представления знаний в виде «особенных» конструктивных каркасов для каждого объекта предметной области с указанием свойств объекта в виде слотов.","a":"Фреймовая система","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Объект: модель, которая не распространена в сфере ИИ, не является эталонной и не используется для представления знаний.","a":"Модель компетенций","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Наиболее распространённые модели представления знаний в интеллектуальных системах.","a":"Семантическая сеть + Продукционная система + Модель нечётких знаний + Фреймовая система + Логическая модель","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Термин: «Он ставит задачу построения теории интеллекта на основе обработки информации; с её помощью можно направленно вести разработку умных машин и прояснять детали поведения людей и животных».","a":"Искусственный интеллект","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Термин: «Это искусственная система, имитирующая решение человеком сложных задач в процессе его жизнедеятельности».","a":"Искусственный интеллект","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Термин: «Это хранимая (в компьютере) информация, формализованная по определённым структурным правилам, которую компьютер может автономно использовать при решении проблем по таким алгоритмам, как логические выводы».","a":"Знания","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Термин: «Они — часть системы знаний, часто представляются в виде продукций и обычно позволяют принимать решения (например, сопоставление различных элементов знаний)».","a":"Правила","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Введите термин: «Это механизм получения новых знаний в интеллектуальных системах на основе имеющихся фактов и правил; основан на метазнаниях, например в Prolog-системах — на принципе резолюции».","a":"Вывод (логический вывод)","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Введите термин: «Это наука о концепциях, позволяющих вычислительным машинам делать такие вещи, которые у людей выглядят разумными; её задача — сделать вычислительные машины более полезными».","a":"Искусственный интеллект","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Термин, наиболее соответствующий внутренним потребностям ИИ, который даёт средства для естественно-языкового общения с ЭВМ и автоматического перевода текстов.","a":"Компьютерная лингвистика","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Термин, наиболее соответствующий внутренним потребностям ИИ, который предоставляет инструментальные средства (программные и технические) для обработки знаний.","a":"Компьютерная наука (в общем)","topic":"Введение / NBIC","flag":0,"n":""},{"q":"На какие виды исследований опирается решение проблемы представления знаний в интеллектуальных системах?","a":"Компьютерная лингвистика + Компьютерная логика","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Направление исследований ИИ, для которого изучение процессов, протекающих в мозгу человека, является максимально приоритетным (введите термин).","a":"Бионическое направление","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Направление исследований ИИ, объединяющее специалистов, считающих, что интеллектуальные программы надо «выращивать», наделяя их знаниями в процессе обучения и накапливая новые выводы и решения (введите термин).","a":"Эволюционное направление","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Направление исследований ИИ, объединяющее специалистов, которые создают программное обеспечение, способное к самообучению (введите термин).","a":"Эволюционное направление","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Направление исследований ИИ, объединяющее специалистов, занимающихся созданием машинных способов решения интеллектуальных задач и программ для вычислительных машин, решающих такие задачи (введите термин).","a":"Эвристическое направление","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Направление исследований ИИ, объединяющее специалистов, считающих, что устройство интеллектуальных программ и способов их создания имеет низкий приоритет по сравнению с конечными результатами работы системы (введите термин).","a":"Эвристическое направление","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Направления ИИ, основанные на выделении специальных метапроцедур, которыми человек проводит мыслительную деятельность и решает поставленные задачи.","a":"Эвристическое + Бионическое + Эволюционное (все три)","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Методы ИИ, которые используются при создании программ, реализующих метапроцедуры с использованием языков программирования.","a":"Дедуктивные методы","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Методы ИИ, которые позволяют опытным путём выявлять характеристики метапроцедур, созданных человеком, используя «готовые программы» и изменяя априорную информацию в них.","a":"Эмпирические методы","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Объекты, соответствующие «научным методам искусственного интеллекта» в теории ИИ.","a":"Эмпирические + Описательные + Дедуктивные методы","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Объекты, соответствующие «предмету исследований» в теории искусственного интеллекта.","a":"Интеллектуальные метапроцедуры человека + Метапрограммы, реализующие метапроцедуры человека","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Что такое МЭСМ?","a":"Это первая отечественная ЭВМ","topic":"Введение / NBIC","flag":0,"n":""},{"q":"В какой период появился термин «Искусственный интеллект»?","a":"1960–1970","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Какие принципы организации поддерживает архитектура фон Неймана?","a":"Хранение данных и инструкций по обработке в одном разделе памяти + Совместное хранение команд и данных в памяти + Совместное размещение устройства управления и АЛУ на центральном процессоре","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Задачи, получившие стартовую приоритетную позицию при оформлении ИИ как отдельной области науки (середина прошлого века).","a":"Доказательство теорем + Игровые задачи + Автоматическое реферирование + Распознавание образов + Машинный перевод + Сочинение текстов и музыки (6 задач)","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Как расшифровывается буква C в аббревиатуре NBIC?","a":"Cogno","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Область NBIC-конвергенции, наиболее развитая на данный момент и являющаяся главным донором для синергетического эффекта взаимовлияния.","a":"Info","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Области NBIC-конвергенции, пересечения которых позволяют развивать «внешнюю кору» (экзокортекс) мозга — системы программ, дополняющих и расширяющих мыслительные процессы человека.","a":"Info + Cogno","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Области NBIC-конвергенции, пересечения которых дают возможности для компонентной базы с новыми свойствами материалов на молекулярном уровне и для разработки новых вычислительных и коммуникационных устройств.","a":"Nano + Info","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Области NBIC-конвергенции, пересечения которых дают самые минимальные результаты в настоящее время (в связи с более поздним развитием этих областей), но крайне перспективны.","a":"Cogno + Nano","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Области NBIC-конвергенции, пересечения которых крайне перспективны для создания ДНК-компьютеров.","a":"Bio + Info + Nano","topic":"Введение / NBIC","flag":1,"n":"Верной попытки в скриншотах не было; ответ дан по логике NBIC. Требует проверки."},{"q":"Области NBIC-конвергенции, пересечения которых перспективны для развития «нейро-силиконовых» интерфейсов и подключения искусственных органов к человеку через нервную систему.","a":"Nano + Bio + Cogno","topic":"Введение / NBIC","flag":1,"n":"Верной попытки в скриншотах не было; ответ дан по логике NBIC. Требует проверки."},{"q":"Утверждения, соответствующие понятию NBIC-конвергенции как стимула развития интеллектуальных систем и технологий.","a":"Гипотетическое ядро 6-го технологического уклада + Феномен, основанный на объединении и синергетическом усилении достижений передовых технологий","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Области NBIC-конвергенции, пересечения которых перспективны для моделирования живых организмов, например моделирования коры головного мозга (проект Blue Brain).","a":"Bio + Cogno + Info","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Области NBIC-конвергенции, пересечения которых позволяют разрабатывать микроскопических роботов (до 100 нм) для изучения мозга и деятельности отдельных нейронов.","a":"Nano + Bio + Cogno","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Направления исследований, изначально соответствовавшие потребностям зарождающейся области знаний ИИ и связанные с вычислительной техникой.","a":"Компьютерная наука + Компьютерная логика + Компьютерная лингвистика","topic":"Введение / NBIC","flag":0,"n":""},{"q":"Выберите способы формализации в ИИ, которые позволяют представить задачу в виде ориентированного графа.","a":"Иерархия; Последовательность","topic":"Формализация задач","flag":0,"n":""},{"q":"Выберите способы формализации в ИИ, которые позволяют представить задачу в виде пространства состояний на основе ориентированного графа.","a":"Последовательность","topic":"Формализация задач","flag":0,"n":""},{"q":"Выберите способы формализации в ИИ, которые позволяют представить задачу в виде пространства поиска, в котором ищется решение задачи.","a":"Иерархия; Последовательность","topic":"Формализация задач","flag":0,"n":""},{"q":"Способ формализации «рассматривает предметную область как разбиение на подзадачи, к которым может быть сведено решение исходной большой задачи».","a":"Иерархия","topic":"Формализация задач","flag":0,"n":""},{"q":"Способ формализации: «Найти такую последовательность правил декомпозиции, сводящую решение исходной задачи к решению одной или нескольких примитивных подзадач».","a":"Иерархия","topic":"Формализация задач","flag":0,"n":""},{"q":"Способ формализации «рассматривает применение того или иного правила декомпозиции к некоторой задаче и сводит её решение к одной или нескольким более простым подзадачам».","a":"Иерархия","topic":"Формализация задач","flag":0,"n":""},{"q":"Способ формализации «поддерживает декомпозицию задачи на графе состояний».","a":"Последовательность","topic":"Формализация задач","flag":0,"n":""},{"q":"Способ формализации «выделяет начальные, промежуточные и конечные состояния формализованной задачи».","a":"Последовательность","topic":"Формализация задач","flag":0,"n":""},{"q":"Способ формализации «учитывает целевые условия, определяющие, какие состояния следует считать конечными в формализованной задаче».","a":"Последовательность","topic":"Формализация задач","flag":0,"n":""},{"q":"Объект, соответствующий вершинам ориентированного графа пространства подзадач.","a":"Примитивные подзадачи","topic":"Формализация задач","flag":0,"n":""},{"q":"Объект, соответствующий рёбрам ориентированного графа пространства подзадач.","a":"Правила декомпозиции","topic":"Формализация задач","flag":0,"n":""},{"q":"Объект, соответствующий рёбрам ориентированного графа пространства состояний.","a":"Разрешённые операции","topic":"Формализация задач","flag":0,"n":""},{"q":"Выберите обязательные компоненты, которыми может быть представлена задача.","a":"Предметная область; Цель (целевые состояния) задачи; Разрешённые операции над элементами предметной области; Стратегии управления поиском решений","topic":"Формализация задач","flag":0,"n":""},{"q":"Выберите объекты, которыми может характеризоваться формализованное представление задачи в ИС.","a":"ВСЕ варианты: Предметная область; Разрешённые операции над элементами предметной области; Ограничения (условия) на свойства объектов; Цель (целевые состояния) задачи; Стратегии управления поиском решений; Конечная позиция решения задачи; Множество объектов, релевантных задаче; Заданные свойства объектов; Начальная позиция решения задачи","topic":"Формализация задач","flag":0,"n":""},{"q":"Стратегия поиска на графе, которая при обходе использует оценку перспективности поиска.","a":"Эвристический поиск","topic":"Формализация задач","flag":0,"n":""},{"q":"Стратегия поиска на графе, которая при обходе использует отношение предпочтения поиска.","a":"Эвристический поиск","topic":"Формализация задач","flag":0,"n":""},{"q":"Стратегия поиска, которая всегда выбирает из нескольких альтернативных вершин вершину, ближайшую к корню графа, с минимальным числом операций перехода из одного состояния в другое.","a":"Поиск в ширину","topic":"Формализация задач","flag":0,"n":""},{"q":"Чему равно значение оценочной функции в стратегии поиска в ширину?","a":"Обратно пропорционально расстоянию от вершины до корня графа","topic":"Формализация задач","flag":0,"n":""},{"q":"Чему равно значение оценочной функции в стратегии поиска в глубину?","a":"Прямо пропорционально расстоянию от вершины до корня графа","topic":"Формализация задач","flag":0,"n":""},{"q":"Какое слово чаще всего используется в качестве синонима задачи в «ИИ»?","a":"Проблема","topic":"Формализация задач","flag":0,"n":""},{"q":"Термин: «Она определяется на вершинах графа и указывает на степень предпочтительности продолжения поиска решающего пути из этой вершины».","a":"Оценочная функция","topic":"Формализация задач","flag":0,"n":""},{"q":"Термин: «Это оптимальная траектория декомпозиции примитивных подзадач на графе в пространстве поиска».","a":"Решающее поддерево","topic":"Формализация задач","flag":0,"n":""},{"q":"Термин, обозначающий «денотат» (объект) в семантической модели Фреге.","a":"Предмет","topic":"Формализация задач","flag":0,"n":""},{"q":"Термин, обозначающий «инсигнат» (знак) в семантической модели Фреге.","a":"Слово","topic":"Формализация задач","flag":0,"n":""},{"q":"Критерий ЕЯ: «Она характеризуется появлением в тексте синонимии».","a":"Избыточность","topic":"Формализация задач","flag":0,"n":""},{"q":"Критерий ЕЯ: «Она проявляется наличием разных по написанию и звучанию слов, выражающих одно и то же содержание».","a":"Избыточность","topic":"Формализация задач","flag":0,"n":""},{"q":"Критерий ЕЯ: «Она характеризуется появлением в тексте избыточной омонимии».","a":"Неоднозначность","topic":"Формализация задач","flag":0,"n":""},{"q":"Критерий ЕЯ: «Она выражается в наличии в тексте слов, имеющих различный смысл в различных контекстах».","a":"Неоднозначность","topic":"Формализация задач","flag":0,"n":""},{"q":"Критерий ЕЯ: «Она проявляется в отсутствии чёткой и однозначной смысловой интерпретации слов, оставляя свободу диапазонов понимания».","a":"Неточность","topic":"Формализация задач","flag":0,"n":""},{"q":"Критерии представления задачи, которые могут быть устранены представлением задачи «в замкнутой форме».","a":"ВСЕ: Неполнота; Избыточность; Неточность; Неоднозначность; Некорректность","topic":"Формализация задач","flag":0,"n":""},{"q":"Понятие: способность интеллектуальной системы к морфологическому, синтаксическому и семантическому анализу вербального представления знаний.","a":"Способность к коммуникации","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Понятие: способность интеллектуальной системы к автоматическому извлечению знаний для решения задач из накопленного опыта конкретных ситуаций.","a":"Способность к самообучению","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Понятие: способность интеллектуальной системы к развитию в соответствии с объективными изменениями модели проблемной области.","a":"Адаптивность системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Категории ЭС, которые по своей функциональности являются самыми простыми.","a":"Классифицирующие экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Категории ЭС: выбор решений из множества известных альтернатив; знания чётко и однозначно определены и интерпретированы.","a":"Классифицирующие экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Категории ЭС: выбор решений из множества известных альтернатив; знания могут обладать неполнотой, недостоверностью или нечёткостью.","a":"Доопределяющие экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Категории ЭС, которые по своей функциональности могут быть синтетическими.","a":"Трансформирующие + Многоагентные экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Категории ЭС, которые предусматривают возможность пересмотра в процессе решения полученных ранее результатов и данных.","a":"Трансформирующие экспертные системы","topic":"Классификация ИИС","flag":1,"n":"Спорно: в одной попытке выбрано «Трансформирующие», в другой «Доопределяющие». По теории «пересмотр ранее полученных результатов» = Трансформирующие."},{"q":"Категории ЭС: генерация неизвестных решений + пересмотр ранее полученных результатов; работают с однокомпонентными базами знаний.","a":"Трансформирующие экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Категории ЭС: генерация новых знаний и решений; знания неполные/недостоверные/нечёткие; используют большое число источников.","a":"Многоагентные экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС, для которого характерно обязательное использование тезауруса.","a":"Гипертекстовые системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: обобщение примеров «от частного к общему» — выявление подмножеств примеров одних подклассов и их значимых признаков.","a":"Индуктивные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: решающие функции в задачах классификации на основе сопоставления значений признаков с пороговым значением (при превышении класс распознан).","a":"Нейросетевые системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: процесс классификации в виде дерева решений (в промежуточных узлах — значения признаков, в конечных — класс).","a":"Индуктивные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: использование специальной подсистемы — механизма объяснения.","a":"Экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: база знаний содержит сами ситуации, поиск решения сводится к абдуктивному выводу от частного к частному (аналогии).","a":"Системы на прецедентах","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: организация запросов и вывод информации, явно не хранящейся в системе, но формируемой на основе данных БД.","a":"Интеллектуальные Базы Данных","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: самый популярный алгоритм — алгоритм обратного распространения ошибки.","a":"Нейросетевые системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: формирование разнообразных семантических типов связей между сегментами (синонимия, родо-видовые, причинно-следственные, ассоциативные).","a":"Гипертекстовые системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: ситуации описываются множеством признаков, строятся индексы быстрого поиска; обучение сводится к запоминанию каждой новой ситуации с принятыми решениями.","a":"Системы на прецедентах","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: используются линейные и нелинейные передаточные функции, определяющие зависимости между входными и выходными признаками.","a":"Нейросетевые системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: использование многомерного текста с точками ветвления (чтение можно продолжать в нескольких направлениях).","a":"Гипертекстовые системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: ситуационный анализ и нечёткий поиск с получением множества допустимых альтернатив, каждая из которых оценивается коэффициентом уверенности.","a":"Системы на прецедентах","topic":"Классификация ИИС","flag":1,"n":"Спорно: в двух попытках выбрано «Системы на прецедентах», в одной «Нейросетевые». По смыслу (нечёткий поиск + коэффициент уверенности) вероятнее Системы на прецедентах."},{"q":"Тип ИИС: в основе — методы автоматической классификации примеров ситуаций реальной практики (обучение на примерах).","a":"Индуктивные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: автоматически строятся обобщённые правила/функции принадлежности ситуаций классам, используемые при интерпретации новых ситуаций.","a":"Нейросетевые + Индуктивные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: для проектирования привлекается когнитолог, производящий инженерию знаний специалистов.","a":"Экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: в состав входит интеллектуальный редактор базы знаний, позволяющий когнитологу создавать БЗ в интерактивном режиме.","a":"Экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: характерна организация семантической информации с разделением на фрагменты и переходами к родственным фрагментам; формирование многоцелевого информационного фонда со ссылками между статьями.","a":"Гипертекстовые системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: характерно принятие решений на основе формирования модели знаний и опыта предметного специалиста.","a":"Экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Тип ИИС: функционал предусматривает предоставление пользователю обоснования хода решения и предиктивный анализ решений.","a":"Экспертные системы","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Таргетная функция ИИС для задачи интеллектуального ситуационного прогнозирования.","a":"Формирование данных на основе знаний","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Таргетная функция ИИС для задачи интеллектуальной интерпретации данных.","a":"Обработка данных на основе знаний","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Таргетная функция ИИС для задачи интеллектуального обучения персонала.","a":"Обработка и формирование данных и знаний","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Таргетная функция ИИС для задачи интеллектуального управления технической системой.","a":"Обработка и формирование данных и знаний","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Таргетная функция ИИС для задачи интеллектуального мониторинга данных.","a":"Обработка и формирование данных и знаний","topic":"Классификация ИИС","flag":0,"n":""},{"q":"Внелексическое свойство семантической сети, выражающееся через возможность рекурсивной подстановки вершин и определяемое как тавтология понятий.","a":"Рефлексивность","topic":"Представление знаний","flag":0,"n":""},{"q":"Внелексическое свойство семантической сети, выражающееся через возможность установления критерия трансформации и определяемое как триады связей понятий.","a":"Транзитивность","topic":"Представление знаний","flag":0,"n":""},{"q":"Может ли признак семантической сети принимать временно неизвестное значение при представлении знаний в ИИС?","a":"Да","topic":"Представление знаний","flag":0,"n":""},{"q":"Может ли признак семантической сети принимать ложное значение при представлении знаний в ИИС?","a":"Да","topic":"Представление знаний","flag":0,"n":""},{"q":"Характеризующее событие семантической сети, которое имеет несколько значений (введите термин).","a":"Атрибут","topic":"Представление знаний","flag":0,"n":""},{"q":"Типовые объекты, которые составляют разнообразие понятий графа семантической сети.","a":"Процедуры + Атрибуты + Комплексы признаков + События","topic":"Представление знаний","flag":0,"n":""},{"q":"Типовые объекты семантической сети, в которых могут быть изложены гипотезы.","a":"События","topic":"Представление знаний","flag":0,"n":""},{"q":"Чем является конфликтное множество в продукционных системах представления знаний ИИС?","a":"Это база целей","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые управляют конфликтными множествами и используют стратегии разрешения конфликтов.","a":"Системы продукций","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые в большей степени соответствуют навыкам решения задач человеком и практически не изменяются в процессе работы ИИС.","a":"Системы продукций","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые могут использовать базу правил.","a":"Системы продукций","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, в основе которых лежит визуальная структура в виде графа.","a":"Семантические сети","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые могут быть представлены в виде визуальных отношений понятий и связей между ними.","a":"Семантические сети + Фреймовые модели","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые могут быть представлены в виде предпосылок и заключений.","a":"Исчисление предикатов + Системы продукций","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые могут быть представлены в виде логических связок между высказываниями.","a":"Исчисление предикатов + Системы продукций","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые могут быть представлены в виде предложений, принимающих истинное или ложное значение.","a":"Исчисление предикатов","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые описывают области определения переменных и условия принадлежности.","a":"Исчисление предикатов","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые могут быть представлены в виде структурированного списка свойств, называемых слотами.","a":"Фреймовые модели","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые содержат качественные знания и могут быть представлены на основе моделей Лотфи Заде.","a":"Нечёткая логика","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые в своём развитии поддерживают НЕ-факторы (неполноты, неточности, неоднозначности, некорректности).","a":"Нечёткая логика","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели ИИС, которые относятся к процедурным моделям представления знаний.","a":"Системы продукций + Нечёткая логика + Исчисление предикатов","topic":"Представление знаний","flag":0,"n":""},{"q":"Модели представления знаний, которые содержат механизмы возврата в предыдущее состояние по ходу решения и могут управлять алгоритмом поиска.","a":"Исчисление предикатов + Системы продукций","topic":"Представление знаний","flag":0,"n":""},{"q":"Название слотов фреймовой модели знаний, определяющих иерархию фреймов и обеспечивающих наследование свойств.","a":"AKO + ISA","topic":"Представление знаний","flag":0,"n":""},{"q":"Как называется фрейм, в котором отражены не только декларативные, но и процедурные средства (введите термин)?","a":"Скрипт (фрейм-сценарий)","topic":"Представление знаний","flag":0,"n":""},{"q":"Когнитивная структура знаний для выражения: «Если автомобиль выглядит как Lamborghini, то вероятно он тоже спорт-люкс».","a":"Представление понятий класса с помощью базового прототипа","topic":"Представление знаний","flag":0,"n":""},{"q":"Когнитивная структура знаний для выражения: «Если есть усы, лапы и полосатый хвост, то вероятно это кот Матроскин».","a":"Представление класса понятий через его элементы","topic":"Представление знаний","flag":0,"n":""},{"q":"Процесс, который при разработке ИИС осуществляется с использованием специальных когнитивных программных средств.","a":"Приобретение знаний","topic":"Представление знаний","flag":0,"n":""},{"q":"Процесс, в котором при разработке ИИС получение знаний от экспертов происходит без использования компьютерных средств, путём непосредственного контакта.","a":"Извлечение знаний","topic":"Представление знаний","flag":0,"n":""},{"q":"Когнитивный процесс, который осуществляется с использованием программ обучения и при наличии репрезентативной выборки примеров принятия решений.","a":"Формирование знаний","topic":"Представление знаний","flag":0,"n":""},{"q":"Несуществующий когнитивный процесс приобретения знаний.","a":"Субъективирование знаний","topic":"Представление знаний","flag":0,"n":""},{"q":"Специалист, который занимается инженерией знаний, обладает мета-знаниями и чаще всего является посредником в диалоге с экспертом (введите термин).","a":"Когнитолог","topic":"Представление знаний","flag":0,"n":""},{"q":"Какие источники знаний в процессе их извлечения традиционно принято считать субъективными?","a":"Экспертные + Эмпирические знания","topic":"Представление знаний","flag":0,"n":""}];
+const POOLS = {"D_models":["Семантическая сеть","Продукционная система","Модель нечётких знаний","Фреймовая система","Логическая модель","Модель компетенций"],"D_nbic":["Nano","Bio","Info","Cogno","Custom","Intelligent"],"D_letterC":["Community","Control","Convergence","Cogno","Custom","Creative"],"D_directions":["Бионическое направление","Эвристическое направление","Эволюционное направление"],"D_methods":["Дедуктивные методы","Эмпирические методы","Описательные методы","Поисковые методы"],"D_disc":["Компьютерная лингвистика","Компьютерная логика","Компьютерная наука (в общем)","Когнитивная наука"],"D_mesm":["Это первая отечественная ЭВМ","Это первая счётная машина, основанная на нечёткой логике","Это первый в мире американский ламповый компьютер","Это первый персональный компьютер для игровых задач"],"D_period":["1950–1960","1960–1970","1970–1980"],"D_neumann":["Совместное хранение команд и данных в памяти","Хранение данных и инструкций по обработке в одном разделе памяти","Совместное размещение устройства управления и АЛУ на центральном процессоре","Разделение функций хранения команд и данных во внешней и оперативной памяти"],"D_early":["Доказательство теорем","Игровые задачи","Автоматическое реферирование","Распознавание образов","Машинный перевод","Сочинение текстов и музыки","Создание операционных систем","Разработка систем управления базами данных"],"D_subject":["Интеллектуальные метапроцедуры человека","Метапрограммы, реализующие метапроцедуры человека","Алгоритмы машинного обучения","Структуры данных и базы знаний"],"D_nbicthesis":["Гипотетическое ядро 6-го технологического уклада","Феномен, основанный на объединении и синергетическом усилении достижений передовых технологий","Схема сети пересечений новейших технологий на основе цитирования","Раздел компьютерной лингвистики о переводе текстов"],"A_graph":["Последовательность","Иерархия","Цикл","Петля"],"A_objects":["Примитивные подзадачи","Правила декомпозиции","Разрешённые операции","Состояния задачи"],"A_eval":["Прямо пропорционально расстоянию от вершины до корня графа","Обратно пропорционально расстоянию от вершины до корня графа","Не зависит от числа рёбер в графе"],"A_search":["Поиск в ширину","Поиск в глубину","Эвристический поиск","Синтаксический поиск","Поиск Немо"],"A_criteria":["Избыточность","Неоднозначность","Неточность","Неполнота","Некорректность"],"A_frege":["Слово","Понятие","Предмет"],"A_synonym":["Проблема","Цель","Решение","Условие"],"A_taskobj":["Предметная область","Разрешённые операции над элементами предметной области","Ограничения (условия) на свойства объектов, релевантных задаче","Цель (целевые состояния) задачи","Стратегии управления поиском решений","Конечная позиция решения задачи","Множество объектов, релевантных задаче","Заданные свойства объектов, релевантных задаче","Начальная позиция решения задачи"],"B_types":["Гипертекстовые системы","Индуктивные системы","Нейросетевые системы","Системы на прецедентах","Экспертные системы","Интеллектуальные Базы Данных","Контекстные системы помощи"],"B_escat":["Классифицирующие экспертные системы","Доопределяющие экспертные системы","Трансформирующие экспертные системы","Многоагентные экспертные системы"],"B_target":["Обработка данных на основе знаний","Формирование данных на основе знаний","Обработка и формирование данных и знаний","Обработка и формирование знаний на основе метаданных"],"B_concept":["Способность к коммуникации","Способность к самообучению","Адаптивность системы","Способность к саморазвитию"],"C_models":["Семантические сети","Исчисление предикатов","Нечёткая логика","Системы продукций","Фреймовые модели"],"C_prop":["Рефлексивность","Транзитивность","Симметричность","Логичность"],"C_yesno":["Да","Нет"],"C_objects":["События","Атрибуты","Процедуры","Комплексы признаков","Аргументы","Пользователи","Данные"],"C_conflict":["Это база целей","Это база знаний","Это база опыта","Это база данных"],"C_slots":["AKO","ISA","IFN","IFR"],"C_cognstruct":["Представление понятий класса с помощью базового прототипа","Представление класса понятий через его элементы","Представление понятий класса с помощью набора признаков"],"C_sources":["Экспертные знания","Эмпирические знания","Теоретические знания","Формализованные знания"],"C_process":["Приобретение знаний","Извлечение знаний","Формирование знаний","Субъективирование знаний"]};
+const TOPICS = ["Все темы", ...Array.from(new Set(DATA.map(d=>d.topic)))];
+
+const STRIP=["экспертные системы","экспертных систем","системы","система","методы","метод","модели","модель","знания","знаний","направление","в общем"];
+function norm(s){s=String(s).toLowerCase().replace(/[«»".,:;()]/g," ");for(const w of STRIP)s=s.replace(new RegExp("\\b"+w+"\\b","g")," ");return s.replace(/ё/g,"е").replace(/\s+/g," ").trim();}
+function comps(a){a=a.replace(/^вс[её][^:]*:\s*/i,"").replace(/\s*\(вс[её][^)]*\)/i,"");return a.split(/\s*\+\s*|\s*;\s*/).map(x=>x.trim()).filter(Boolean);}
+function matchOpt(c,pool){const nc=norm(c);for(const o of pool){const no=norm(o);if(no===nc||no.startsWith(nc)||nc.startsWith(no))return o;}return null;}
+function classify(q){if(q.a==="Правила")return null;const cs=comps(q.a);for(const name in POOLS){const pool=POOLS[name];const m=cs.map(c=>matchOpt(c,pool));if(m.every(Boolean)){const u=[...new Set(m)];if(u.length<=cs.length)return{pool,correct:new Set(u),multi:u.length>1};}}return null;}
+DATA.forEach(q=>{q._spec=classify(q);});
+
+// Номера относятся к порядку вопросов в DATA. При регистрации сохраняется полный текст вопроса.
+const EXPLANATIONS=new Map();
+function explain(numbers,why,note="",source=null){
+  numbers.forEach(number=>{
+    const card=DATA[number-1];
+    if(!card||EXPLANATIONS.has(card.q))throw new Error("Проверь пояснение к вопросу "+number);
+    EXPLANATIONS.set(card.q,{why,note,source});
+  });
+}
+explain([1,116],"Семантическая сеть описывает знания как граф: вершина обозначает понятие или объект, ребро связывает его с другим. Например: «кошка → является → животным». У фрейма главный признак – слоты одного объекта, у продукции – правило «если… то…».");
+explain([2],"В нечёткой модели свойство может выполняться в некоторой степени: например, человек бывает «скорее высоким», а не только высоким или невысоким. Поэтому признак вопроса – невозможность ограничиться двумя значениями истина/ложь. Обычная двузначная логика такого перехода между степенями не описывает.");
+explain([3,122],"Фрейм – описание типичного объекта через именованные поля, или слоты: у автомобиля это могут быть модель, цвет и двигатель. Слова «каркас» и «слоты» указывают на фрейм. У семантической сети в центре внимания связи между понятиями, у продукции – условие и действие.");
+explain([4],"Модель компетенций описывает способности и требования к специалисту. В принятую здесь пятёрку моделей представления знаний она не входит. Её название похоже на остальные варианты, но предмет описания у неё другой.");
+explain([5],"В банке используются пять подходов: связи понятий – семантические сети, правила – продукции, слоты – фреймы, формальные утверждения – логика, степени выраженности свойств – нечёткие знания. Нужно отметить всю пятёрку. Модель компетенций относится к описанию способностей специалиста.");
+explain([6,7,11],"В этих формулировках банк ожидает термин «искусственный интеллект»: речь идёт об области, которая изучает и создаёт способы решения интеллектуальных задач машинами. «Знания» – используемое содержание, а «вывод» – отдельный механизм работы с ним. Вариант про искусственную систему сформулирован шире обычного определения области, но ключ использует тот же термин.");
+explain([8],"Здесь информация уже организована так, чтобы система могла использовать её в рассуждениях: это знания. Отдельные факты без такой интерпретации обычно называют данными. Правила и логический вывод помогают работать со знаниями, но не заменяют само это понятие.");
+explain([9],"Правило связывает условие с заключением или действием: «если выполнено A, то сделать B». Вопрос описывает такие элементы базы знаний в целом. Правила декомпозиции – более узкий случай: они разбивают задачу на подзадачи, чего в условии не сказано.");
+explain([10],"Логический вывод получает новое утверждение из уже известных фактов и правил. Например: «все люди смертны» и «Сократ – человек» дают «Сократ смертен». Факты и правила – исходный материал; вывод – процесс получения результата.");
+explain([12],"Компьютерная лингвистика занимается обработкой человеческого языка, включая анализ текста и машинный перевод. Поэтому общение на естественном языке указывает именно на неё. Компьютерная логика рассматривает формальные рассуждения, а не устройство языка как основную задачу.");
+explain([13],"Вопрос охватывает программные и технические инструменты обработки знаний в целом, поэтому ключ выбирает компьютерную науку. Лингвистика специализируется на языке, логика – на формальном рассуждении. Каждая из них уже, чем названный здесь набор инструментов.");
+explain([14],"Представление знаний требует выразить содержание и задать правила работы с ним. Лингвистика помогает описать язык выражения знаний, а логика – их формальные связи и выводы. Поэтому в ключе нужны обе дисциплины, а не только одна.");
+explain([15],"Бионическое направление ищет основу для ИИ в устройстве и работе живого мозга. Отличительный признак здесь – приоритет изучения мозга. Эвристическое направление сосредоточено на способах решения задач, эволюционное – на развитии программы в ходе обучения.");
+explain([16,17],"В терминологии этого курса эволюционное направление предлагает развивать программу в процессе обучения: она накапливает знания и новые способы решения. Маркеры – «выращивать» и «самообучение». Это классификация направлений курса, а не утверждение, что любой обучающийся алгоритм является эволюционным алгоритмом.");
+explain([18,19],"Эвристическое направление в этой классификации ставит в центр машинные способы решения интеллектуальных задач и полученный результат. Точное воспроизведение устройства мозга для него не обязательно. Приоритет строения мозга указывает на бионическое направление, развитие программы в обучении – на эволюционное.");
+explain([20],"Вопрос сформулирован обобщённо: перечисленные направления предлагают разные пути воспроизведения интеллектуальной деятельности. В нём нет уточнения только про строение мозга, обучение или практический алгоритм. Поэтому ключ включает все три направления.");
+explain([21],"В принятой в курсе классификации дедуктивные методы формализуют способы рассуждения и реализуют их как программы. Подсказка – создание программ, реализующих метапроцедуры. Если бы речь шла об испытании готовых программ с разными данными, это были бы эмпирические методы.");
+explain([22],"Эмпирический метод получает сведения из опыта: программу запускают, меняют входные данные и наблюдают результат. Здесь исследуют поведение уже готового решения. Дедуктивный подход связан с формальным построением рассуждений, а описательный – с их описанием.");
+explain([23],"По схеме курса научный аппарат включает описание интеллектуальной деятельности, её формализацию и экспериментальную проверку. Этому соответствуют описательные, дедуктивные и эмпирические методы. Поиск решения – важная процедура ИИ, но в данном перечне не отдельная группа научных методов.");
+explain([24],"Предмет исследования объединяет интеллектуальные действия человека и их программные реализации: метапроцедуры и метапрограммы. Только человеческие действия не охватывают машинную реализацию, только программы – исследуемый образец. Алгоритмы обучения и базы знаний являются более частными объектами.");
+explain([25],"МЭСМ расшифровывается как Малая электронная счётная машина и относится к ранней отечественной вычислительной технике. Поэтому подходит вариант о первой отечественной ЭВМ. Нечёткая логика, американский компьютер и персональная игровая машина описывают другие объекты.");
+explain([26],"В текущем ключе записано «1960–1970», но название Artificial Intelligence уже использовано в предложении Дартмутского проекта от 31 августа 1955 года; сама встреча состоялась в 1956 году. Историческая дата появления термина относится к 1950-м. Объяснять ключ 1960–1970 как бесспорный факт нельзя.","Ключ расходится с первоисточником. Балл пока считается по существующему ключу; ожидаемый ответ преподавателя нужно уточнить.",{label:"Предложение Дартмутского проекта, 1955",url:"https://www-formal.stanford.edu/jmc/history/dartmouth/dartmouth.html"});
+explain([27],"Основная идея – программа и данные находятся в общей памяти, а процессор включает устройство управления и арифметико-логическое устройство. Первые две выбранные формулировки ключа почти повторяют одну идею. Раздельная память команд и данных – другой принцип; размещение УУ и АЛУ не обязательно означает один физический кристалл.");
+explain([28],"Перечисленные шесть задач служили ранними примерами интеллектуального поведения машины: играть, доказывать, переводить, распознавать, реферировать и создавать тексты или музыку. Ключ требует весь этот набор. Операционные системы и СУБД – прежде всего системное программное обеспечение, а не перечисленные в курсе исходные задачи ИИ.");
+explain([29],"C обозначает Cogno – когнитивные науки и технологии, связанные с познанием и мышлением. Convergence означает объединение направлений в целом и не является расшифровкой этой буквы. Nano, Bio и Info соответствуют остальным трём буквам.");
+explain([30],"В исторической картине, используемой курсом, информационные технологии дают остальным областям вычисления, моделирование и обработку данных. Поэтому Info названа главным донором. Это характеристика периода, описанного в лекции, а не неизменный рейтинг зрелости наук.");
+explain([31],"Экзокортекс здесь – программное дополнение мыслительных процессов человека. Программная инфраструктура даёт Info, а познание и мышление – Cogno. Условие не требует ни молекулярных материалов, ни вмешательства в живую ткань, поэтому Nano и Bio не входят в этот ключ.");
+explain([32],"Новые материалы на молекулярном уровне относятся к Nano, вычислительные и коммуникационные устройства – к Info. Нужны обе области: материал и его информационное применение. Работа с живыми организмами или мышлением прямо не задана.");
+explain([33],"В схеме курса наименее развитым пересечением названы Nano и Cogno: молекулярные технологии и исследование познания. Это привязано к оценке, данной в лекции. Выбирать Info только потому, что компьютеры применимы везде, здесь нельзя: вопрос просит конкретное пересечение из этой схемы.");
+explain([34],"Bio относится к ДНК как биологическому носителю, Info – к выполнению вычислений, Nano – к молекулярному масштабу реализации. Так можно понять выбранную в банке тройку. Но упоминание ДНК само по себе не доказывает, что экзаменационный ключ обязательно включает Nano: состав комбинации остаётся неподтверждённым.");
+explain([35],"Сочетание Nano + Bio + Cogno в ключе можно связать с материалами интерфейса, нервной тканью и работой мозга. Однако лекционный пример также описывает электронные устройства и обработку сигналов, поэтому исключение Info из ответа не следует однозначно из условия. Здесь важно видеть неоднозначность, а не заучивать произвольную комбинацию как закон.");
+explain([36],"Конвергенция означает взаимное усиление направлений при объединении их достижений; в курсе её рассматривают как гипотетическое ядро шестого технологического уклада. Поэтому ключ включает эти два утверждения. Сеть цитирований – способ визуализировать научные связи, а не определение самого технологического эффекта.");
+explain([37],"В приведённой комбинации Bio обозначает живой объект моделирования, Cogno – мозг и познавательные функции, Info – компьютерную модель. Nano не добавляется автоматически: в условии главный признак – моделирование мозга, а не создание материала на наноуровне.");
+explain([38],"Размер роботов до 100 нм указывает на Nano; нейроны как живые клетки – на Bio; исследование работы мозга – на Cogno. Ключ сочетает масштаб инструмента, биологический объект и когнитивную цель. Само наличие сложной техники не означает, что надо автоматически отмечать все четыре области.");
+explain([39],"Вопрос специально ограничивает перечень дисциплинами, связанными с вычислительной техникой. По ключу это компьютерная наука, компьютерная логика и компьютерная лингвистика. Когнитивная наука тоже важна для ИИ, но это более широкое исследование познания, а не одно из трёх компьютерных направлений в данном перечне.");
+explain([40,42],"В курсе рассматриваются два представления пространства поиска: переходы между состояниями и разбиение на подзадачи. Им соответствуют последовательность и иерархия; обе структуры можно выразить ориентированным графом. Цикл и петля могут встречаться в графах, но здесь это не названия двух изучаемых способов формализации.");
+explain([41,47,48],"При представлении через состояния решение выглядит как последовательность допустимых переходов от начала к цели. Например: начальное расположение фигур → ход → новое расположение. Иерархия отвечает на другой вопрос: на какие более простые подзадачи разбить исходную задачу.");
+explain([43,44,45],"Разбиение большой задачи на меньшие образует иерархию: наверху исходная задача, ниже её подзадачи. Важен объект разбиения, а не отдельное слово «последовательность». Даже если правила декомпозиции применяются последовательно, модель остаётся иерархией подзадач.");
+explain([46],"В этой формулировке ключевое уточнение – «граф состояний», поэтому банк выбирает последовательность переходов. Слово «декомпозиция» само по себе могло бы навести на иерархию, но там речь должна идти о разбиении на подзадачи. Сначала определяй, что обозначают вершины графа.");
+explain([49],"Вершины графа подзадач обозначают задачи, которые требуется решить; рёбра показывают, как они связаны разбиением. Ключ называет вершины «примитивными подзадачами». Это упрощение: примитивными обычно являются конечные подзадачи, а промежуточные вершины могут требовать дальнейшего разбиения.","Формулировка ключа уже общего смысла графа подзадач: не каждая вершина обязательно примитивна.");
+explain([50],"В графе подзадач ребро отражает применение правила декомпозиции: исходная задача сводится к более простой. Сама подзадача представлена вершиной. Разрешённая операция перехода между состояниями относится к другому представлению – графу состояний.");
+explain([51],"В графе состояний ребро показывает действие, переводящее систему из одного состояния в другое. Поэтому это разрешённая операция, например ход в игре. Правило декомпозиции связывает задачу с подзадачами, а не два состояния.");
+explain([52],"В перечне курса нужно задать, с чем работаем, к чему стремимся, какие действия разрешены и как выбираем путь поиска. Это предметная область, цель, операции и стратегия. Остальные варианты уточняют описание, но ключ спрашивает именно четыре компонента этой схемы.");
+explain([53],"Здесь спрашивают, чем представление задачи МОЖЕТ характеризоваться, а не только обязательный минимум. Объекты, свойства, ограничения, начальная и конечная позиции, цель, операции и стратегия действительно могут входить в описание. Поэтому выбираются все девять вариантов, в отличие от вопроса про четыре обязательных компонента.");
+explain([54,55],"Эвристический поиск использует дополнительную оценку: какое продолжение выглядит перспективнее для достижения цели. При поиске в ширину важен уровень вершины, при поиске в глубину – углубление по ветви. Маркер здесь – именно предпочтительность или перспективность, а не только расстояние до корня.");
+explain([56],"Поиск в ширину рассматривает сначала ближайшие к корню вершины, затем следующий уровень. При одинаковой стоимости переходов это позволяет найти путь с минимальным числом шагов. Поиск в глубину может сначала уйти далеко по одной ветви, а эвристический выбирает по оценке перспективности.");
+explain([57],"В принятой в вопросе оценке большая предпочтительность соответствует меньшей глубине: чем ближе вершина к корню, тем раньше её рассматривают. Поэтому ключ выбирает обратную зависимость. Это способ описать приоритет уровней; сам алгоритм поиска в ширину не обязан вычислять формулу 1/расстояние.");
+explain([58],"В принятой здесь шкале поиска в глубину более глубокая вершина получает больший приоритет продолжения. Поэтому ключ выбирает прямую зависимость от расстояния до корня. Практическая реализация обычно использует стек; обязательной численной оценочной функции у алгоритма нет.");
+explain([59],"В задачах ИИ слово problem обычно передаётся как «задача» или «проблема». Цель – желаемый результат этой задачи, условие – исходные сведения, решение – найденный способ достижения цели. Это связанные части, но не синонимы всей задачи.");
+explain([60],"Оценочная функция присваивает вершине оценку, по которой выбирают, где продолжать поиск. Она может учитывать стоимость уже пройденного пути и предполагаемое расстояние до цели. Стратегия использует такую оценку, но сама функция не является всей стратегией.");
+explain([61],"В иерархическом представлении решение выделяет поддерево: какие разбиения и подзадачи нужны для решения исходной задачи. Поэтому ключ ожидает «решающее поддерево», а не оценочную функцию или отдельную операцию. Поддерево может ветвиться, когда нужно решить несколько подзадач.","Слово «оптимальная» требует заданного критерия оптимальности. Не любое решающее поддерево автоматически оптимально.");
+explain([62],"Денотат – то, на что указывает знак: предмет или объект. Например, слово «Луна» является знаком, а сам небесный объект – его денотатом. Понятие передаёт смысл, слово служит обозначением, предмет является обозначаемым.");
+explain([63],"Здесь спрашивают о знаке, которым обозначают объект, поэтому ключ выбирает слово. Сам объект был бы предметом, а смысловое содержание – понятием. Полезно различать: как назвали, что имеем в виду и на какой объект указываем.");
+explain([64,65],"Синонимия даёт несколько разных выражений для одного содержания. В схеме курса это избыточность: названий больше, чем различающихся смыслов. При неоднозначности ситуация обратная – одно выражение допускает несколько смыслов.");
+explain([66,67],"Омонимия означает, что одна форма слова может обозначать разное: например, «ключ» от двери или источник воды. Поэтому возникает неоднозначность выбора смысла. Избыточность относится к нескольким названиям одного смысла, а неточность – к размытым границам значения.");
+explain([68],"Неточность связана с размытыми границами: «скоро», «много», «высокий» допускают диапазон понимания. Неоднозначность – выбор между разными смыслами, например у слова «ключ». Здесь акцент на отсутствии чёткой интерпретации и границ.");
+explain([69],"В ключе замкнутое формальное описание противопоставлено пяти недостаткам естественного языка: пропускам сведений, лишним выражениям, размытым значениям, нескольким трактовкам и некорректности. Поэтому отмечаются все пять. Сама запись формулами не гарантирует истинности исходных данных: речь об идеале корректно заданной задачи.");
+explain([70],"Морфологический, синтаксический и семантический анализ нужны для понимания языкового сообщения. Поэтому это способность к коммуникации. Самообучение относится к получению знаний из опыта, адаптивность – к изменению системы вслед за предметной областью.");
+explain([71],"Система извлекает закономерности из накопленных ситуаций и использует их в новых задачах: это самообучение. Главное – источник улучшения в собственном опыте. Коммуникация отвечает за обмен сообщениями, адаптивность – за соответствие изменениям среды.");
+explain([72],"Адаптивная система меняется вслед за изменениями предметной области: например, учитывает новые условия работы. Вопрос подчёркивает внешние изменения модели, а не только накопление примеров. Самообучение может быть средством адаптации, но эти способности не тождественны.");
+explain([73,74],"Классифицирующая экспертная система выбирает среди уже известных вариантов при достаточно определённых знаниях. Новое решение конструировать не требуется, поэтому в этой классификации она самая простая. Если знания неполны или нечётки, ключ относит выбор к доопределяющей системе.");
+explain([75],"Ответы уже известны, но сведений для выбора недостаточно или они ненадёжны: система должна доопределить ситуацию. Это отличает её от классифицирующей системы с определёнными знаниями. Генерация ранее неизвестных решений в ключе относится к трансформирующим системам.");
+explain([76],"Синтез здесь связан с получением новых решений, а не только с выбором готового варианта. Этим объясняется пара «трансформирующие + многоагентные» в ключе. Но выжимка на странице 9 ниже относит к синтетическим также доопределяющие системы, поэтому материалы противоречат друг другу.","В выжимке два разных перечня синтетических ЭС. Точный состав экзаменационного ответа требует уточнения.");
+explain([77],"Ключ относит пересмотр промежуточных результатов к трансформирующим системам, которые меняют построенное решение по ходу работы. Однако один признак «пересмотр» не даёт надёжно отличить их от доопределяющих без принятого в курсе определения. Уже в исходном банке отмечены разные ответы на этот вопрос.");
+explain([78],"По схеме курса трансформирующие ЭС строят новые решения и могут пересматривать промежуточные результаты. Это шире выбора из заранее заданных альтернатив. Указание на однокомпонентную базу в данном вопросе дополнительно отличает их от многоагентных систем с несколькими источниками.");
+explain([79],"В этом перечне решающий признак – множество источников знаний при построении нового решения. Многоагентная система объединяет вклад нескольких участников. Неполнота сама по себе могла бы указывать на доопределяющую систему, но вместе с множеством источников ключ выбирает многоагентную.");
+explain([80],"Тезаурус связывает термины по смыслу и помогает переходить между связанными фрагментами информации. Поэтому в классификации банка это признак гипертекстовой системы. Для нейросети характерны веса и функции активации, для индуктивной системы – обобщение примеров.");
+explain([81,83,93],"Индуктивная система выводит общее правило из частных примеров. Дерево решений последовательно проверяет признаки и относит пример к классу. Система на прецедентах ищет похожий прошлый случай, а нейросеть представляет выученные зависимости параметрами сети.");
+explain([82],"Сравнение взвешенного сигнала с порогом – характерная схема работы порогового нейрона. Поэтому по данному ключу выбирается нейросетевая система. Сам по себе порог встречается и в других алгоритмах; здесь вопрос использует его как признак модели нейрона.");
+explain([84],"Механизм объяснения показывает, какие знания и правила привели к решению. Это характерный компонент экспертной системы. Гипертекст помогает переходить между материалами, а обучение по примерам само по себе не означает наличия подсистемы объяснения.");
+explain([85,89],"Система на прецедентах хранит конкретные ситуации вместе с их решениями и ищет аналогичный случай для новой задачи. Например, новая неисправность сравнивается с ранее устранёнными. Индуктивная система прежде всего обобщает примеры в правило, а не просто запоминает их для поиска аналогии.");
+explain([86],"Интеллектуальная БД может получить ответ, который не записан готовой строкой, используя имеющиеся данные и правила вывода. Например, вывести родственную связь из нескольких записей. Определяющий признак здесь – запрос к БД с получением производной информации.");
+explain([87],"Обратное распространение ошибки вычисляет, как параметры нейросети влияют на ошибку, чтобы их можно было скорректировать. Поэтому это нейросетевая система. Дерево решений строится разбиением примеров, а прецедентный подход ищет похожие случаи.");
+explain([88,91,97],"Гипертекст организует материал как фрагменты со смысловыми связями и переходами между ними. Читатель может идти по разным ветвям, а тезаурус описывает отношения терминов. Здесь речь об устройстве информационного материала, а не об обучении классификатора или подборе прошлого решения.");
+explain([90],"Передаточная функция связывает вход и выход нейрона; сеть объединяет такие преобразования. Поэтому линейные и нелинейные функции в этом описании указывают на нейросетевую модель. Тезаурус или база конкретных случаев организуют знания другим способом.");
+explain([92],"Банк выбирает системы на прецедентах: новую ситуацию сопоставляют с прошлым опытом и получают несколько подходящих альтернатив. Но коэффициент уверенности и нечёткий поиск не уникальны для этого типа систем. Поэтому по одной такой фразе уверенно отвергнуть все другие типы нельзя; ключ уже помечен как спорный.");
+explain([94],"И индуктивная, и нейросетевая система могут обобщать обучающие примеры, чтобы классифицировать новые ситуации. Первая может представить результат явными правилами, вторая – функцией с выученными параметрами. Поэтому в ключе отмечаются оба типа; простого хранения прошлых случаев недостаточно.");
+explain([95,96,98],"Экспертная система опирается на знания предметного специалиста. Когнитолог помогает их извлечь и формализовать, а редактор базы знаний – внести в систему. Эти роли отличают описанную схему от автоматического обучения нейросети или индуктивного классификатора по примерам.");
+explain([99],"Экспертная система использует модель знаний специалиста и может обосновать ход вывода. В данном описании именно объяснение решения отличает её от остальных вариантов. Само прогнозирование встречается в разных ИИС, поэтому один только «предиктивный анализ» был бы недостаточным признаком.");
+explain([100],"Прогноз – сведения о будущем или ещё не наблюдавшемся состоянии. Система формирует новые данные, применяя уже имеющиеся знания. При интерпретации она объясняла бы полученные данные, поэтому ключ различает формирование и обработку.");
+explain([101],"Интерпретация придаёт смысл уже полученным данным: например, объясняет показания датчика с помощью правил. Поэтому это обработка данных на основе знаний. Прогнозирование дополнительно формирует сведения о ещё не наблюдавшемся состоянии.");
+explain([102],"В принятой схеме интеллектуальное обучение персонала включает анализ ответов, подбор учебных воздействий и обновление сведений об усвоении материала. Поэтому ключ использует широкую функцию обработки и формирования данных и знаний. Это больше, чем единичная интерпретация показания или построение прогноза.");
+explain([103],"Управление включает оценку состояния технической системы и формирование управляющих решений. В классификации банка этот комплекс относится к обработке и формированию данных и знаний. В отличие от одной интерпретации, результатом становятся также новые действия и сведения о ходе управления.");
+explain([104],"Интеллектуальный мониторинг в схеме курса включает наблюдение, интерпретацию изменений и формирование новых оценок ситуации. Поэтому выбран широкий вариант обработки и формирования данных и знаний. Это учебная классификация: простое накопление показаний само по себе ещё не означает создание новых знаний.");
+explain([105],"Рефлексивность отношения связывает объект с самим собой: xRx. Это помогает понять упоминание тавтологии и самоподстановки в ключе. Симметричность обращает направление отношения, а транзитивность переносит его по цепочке из трёх объектов.","«Рекурсивная подстановка вершин» – специальная формулировка этого банка; в общем случае рекурсия и рефлексивность не являются синонимами.");
+explain([106],"Транзитивность означает: если A связано с B, а B с C одним транзитивным отношением, то A связано с C. Поэтому маркер – триада понятий и перенос связи по цепочке. Симметричность даёт обратную связь B–A, а рефлексивность – связь A с самим собой.");
+explain([107],"Описание объекта может быть неполным: значение свойства ещё не установлено. В такой модели сети допускается отметка «неизвестно», поэтому ответ «да». Неизвестность не равна ложности: отсутствие сведений о свойстве не доказывает, что свойства нет.");
+explain([108],"Логический признак может иметь значение «ложь»: например, «объект исправен = нет». Это осмысленное значение свойства, а не запрет на его представление в сети. «Неизвестно» отличается тем, что истинность признака ещё не установлена.");
+explain([109],"По смыслу ожидается атрибут – именованная характеристика объекта или события, например его время, место или состояние. Атрибут может допускать несколько значений. Само событие – то, что произошло, а атрибут – то, чем оно описывается.","Фраза «характеризующее событие» в вопросе неудачна: атрибут является характеристикой, а не событием.");
+explain([110],"В принятом перечне понятия сети включают события, свойства-атрибуты, комплексы признаков и процедуры. Они позволяют представить, что происходит, какими свойствами обладает объект и какие действия возможны. «Пользователи» и «данные» не являются дополнительными типами в этом конкретном перечне, хотя могут быть объектами иной предметной модели.");
+explain([111],"В этой классификации гипотеза о том, что произошло или может произойти, представляется через событие. Атрибут описывает его характеристику, процедура – способ действия. Это выбранная в курсе схема типовых объектов, а не универсальное ограничение всех семантических сетей.");
+explain([112],"Ключ «база целей» вызывает сомнение: в стандартном описании продукционных систем конфликтное множество состоит из экземпляров правил, применимых к текущим фактам. Стратегия разрешения конфликта выбирает, какое правило выполнить. Это не равнозначно базе целей, поэтому убедительного объяснения текущему ключу нет.","Ключ противоречит стандартному определению конфликтного множества. До уточнения оценка идёт по имеющемуся ответу.",{label:"W3C: определение conflict set",url:"https://www.w3.org/TR/2010/REC-rif-prd-20100622/original.html"});
+explain([113],"В продукционной системе одновременно могут выполняться условия нескольких правил. Возникает конфликтное множество подходящих правил, и стратегия выбирает следующее срабатывание. Слоты описывают фреймы, а отношения между понятиями – семантические сети.");
+explain([114],"Правила-продукции могут выражать освоенные способы действия: «если такая ситуация, поступить так». При обычном выводе применяются уже заданные правила, поэтому сам набор знаний может оставаться неизменным. Это объясняет аналогию с навыком; продукционные системы с обучением также возможны.");
+explain([115],"Продукционная модель хранит знания в виде правил «если условие, то действие или заключение». Поэтому база правил – её прямой отличительный признак. Фреймы организуют свойства в слоты, семантические сети – понятия и отношения.");
+explain([117],"Семантическая сеть явно показывает понятия и связи, а фреймы могут быть связаны отношениями класса, экземпляра и наследования. Поэтому ключ включает обе модели как структурные представления знаний. Логические формулы и правила прежде всего задают утверждения и выводы.");
+explain([118,119],"В логической модели используются высказывания, логические связки и следование; в продукции условие связано с заключением или действием. Поэтому здесь подходят исчисление предикатов и системы продукций. Слоты фрейма или рёбра сети сами по себе не обозначают схему «предпосылки → заключение».");
+explain([120,121],"Исчисление предикатов описывает свойства и отношения через формулы с переменными, областями их значений и кванторами. В классической интерпретации утверждение истинно или ложно. Нечёткая логика допускает степени истинности, а фрейм в первую очередь хранит структурированный набор свойств.");
+explain([123],"Лотфи Заде связан с теорией нечётких множеств: принадлежность может иметь степень от 0 до 1. Так описывают качественные понятия вроде «высокая температура» с размытыми границами. Обычная двузначная логика использует только истину и ложь.");
+explain([124],"В ключе семейство НЕ-факторов связывается с нечёткой логикой. Её основная идея – работа с нечёткими границами и степенями принадлежности. При этом неполнота сведений, неоднозначность и противоречивость – разные проблемы; одна нечёткая логика автоматически не устраняет их все.");
+explain([125],"В классификации этого банка процедурными названы продукции, нечёткая логика и исчисление предикатов: акцент на механизмах обработки и вывода. Сети и фреймы отнесены к структурному описанию знаний. Это условное деление курса: логические формулы также используют как декларативное описание, поэтому вне этой схемы названия могут различаться.");
+explain([126],"Логический вывод может возвращаться к ранее сделанному выбору и проверять альтернативу; продукционный вывод также управляет выбором правил. Поэтому ключ объединяет исчисление предикатов и продукции. Наличие такой возможности зависит от механизма вывода, а не только от названия модели знаний.");
+explain([127],"AKO обычно связывает подкласс с более общим классом, ISA – экземпляр с классом. Такие связи позволяют наследовать свойства: конкретный автомобиль получает свойства своего класса. IFN и IFR в этом наборе обозначают процедурные механизмы работы со слотами, а не отношения иерархии.");
+explain([128],"Скрипт, или фрейм-сценарий, описывает типичную последовательность событий вместе с участниками, условиями и действиями. Например, посещение кафе включает заказ, получение еды и оплату. Поэтому он объединяет описание ситуации и её развитие во времени.");
+explain([129],"Прототип – узнаваемый типичный образ категории. Здесь новый автомобиль относят к классу по сходству с Lamborghini как образцом. При описании через набор признаков проверяли бы отдельный перечень свойств, а здесь условие говорит об общем сходстве.");
+explain([130],"В ключе выбрано представление класса через его элементы. Однако в условии перечислены «усы, лапы, полосатый хвост», то есть признаки; поэтому вариант «через набор признаков» тоже прямо соответствует формулировке. Называние конкретного Матроскина в заключении само по себе не разрешает эту неоднозначность.","Ключ и формулировка плохо согласуются. Не следует считать «элементы класса» и «признаки объекта» одним и тем же.");
+explain([131],"В принятом здесь различении приобретение знаний выполняется с помощью специальных когнитивных программных средств. Непосредственное общение с экспертом называется извлечением, обучение по выборке – формированием. За пределами этой учебной схемы термин «приобретение знаний» может использоваться шире.");
+explain([132],"Вопрос описывает прямой контакт с экспертом: интервью, обсуждение, выяснение того, как он принимает решения. В схеме курса это извлечение знаний. Если акцент на специальных программах, выбирается приобретение; если на обучающей выборке – формирование.");
+explain([133],"Обучающая программа получает репрезентативные примеры решений и вырабатывает закономерности: так в курсе определяется формирование знаний. Здесь знания строятся из примеров, а не только передаются в разговоре с экспертом. Поэтому это не извлечение в узком смысле этой классификации.");
+explain([134],"В схеме курса названы приобретение, извлечение и формирование знаний. «Субъективирование» в этот перечень процессов не входит и служит лишним вариантом. Субъективность источника знаний – другая характеристика, её нельзя превращать в название процесса по сходству слов.");
+explain([135],"Когнитолог, или инженер по знаниям в данном контексте, помогает получить знания эксперта и представить их в форме, пригодной для системы. Он выступает посредником между предметным специалистом и формальной моделью. Эксперт знает предметную область, а когнитолог организует работу с этим знанием.");
+explain([136],"В этой классификации экспертные и эмпирические знания связаны с опытом, наблюдениями и интерпретацией источника, поэтому названы субъективными. Теоретические и формализованные выделены отдельно. Это не означает, что опыт обязательно неверен: субъективность описывает происхождение и зависимость от наблюдателя.");
+
+let mode="exam", topic="Все темы";
+let deck=[], i=0, score=0, wrong=[];
+let spec=null, shown=[], picked=new Set(), answered=false, revealed=false;
+let repeat=[], mastered=0, total=0, cardRevealed=false;
+const EXAM_COUNT=54, EXAM_PASS=25;
+let examActive=false, examFinished=false, examResults=[], examDraft="", examFeedback=null;
+const trainingFooter=document.querySelector(".tiny").textContent;
+const PROFILE_STORE="gnoseology.profiles.v1", ATTEMPT_PREFIX="gnoseology.attempt.v1.";
+let activeProfile=null,profilePickerOpen=false,profileMessage="",profileDraft="";
+let examOwner=null,examId="",examStartedAt="",pendingAttempt=null,attemptSaved=false,attemptSaveError="";
+
+function newId(){return typeof crypto!=="undefined"&&crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+"-"+Math.random().toString(36).slice(2)+"-"+Math.random().toString(36).slice(2);}
+function profileNameKey(name){return name.normalize("NFKC").toLocaleLowerCase("ru").replace(/ё/g,"е").replace(/\s+/g," ").trim();}
+function readProfiles(){
+  const raw=localStorage.getItem(PROFILE_STORE);
+  if(raw===null)return [];
+  let data;
+  try{data=JSON.parse(raw);}catch{throw new Error("Не удалось прочитать профили. Существующие данные не изменены.");}
+  if(data?.version!==1||!Array.isArray(data.profiles)||data.profiles.some(p=>!p||typeof p.id!=="string"||!p.id||typeof p.name!=="string"||!p.name.trim()||p.name.length>40)||new Set(data.profiles.map(p=>p.id)).size!==data.profiles.length){
+    throw new Error("Формат сохранённых профилей не распознан. Существующие данные не изменены.");
+  }
+  return data.profiles;
+}
+function storageError(error){
+  if(error?.name==="QuotaExceededError")return "В браузере не хватает места для сохранения. Результат пока остаётся только на этой странице.";
+  if(error?.name==="SecurityError"||error?.name==="ReferenceError")return "Браузер не разрешает доступ к локальному хранилищу. Сохранение недоступно.";
+  return error?.message||"Не удалось сохранить данные в браузере.";
+}
+function addProfile(name){
+  const clean=String(name).replace(/\s+/g," ").trim();
+  if(!clean||clean.length>40)throw new Error("Введи имя длиной от 1 до 40 символов.");
+  const profiles=readProfiles();
+  if(profiles.some(p=>profileNameKey(p.name)===profileNameKey(clean)))throw new Error("Такой профиль уже есть. Выбери его в списке выше.");
+  const profile={id:newId(),name:clean,createdAt:new Date().toISOString()};
+  localStorage.setItem(PROFILE_STORE,JSON.stringify({version:1,profiles:[...profiles,profile]}));
+  return profile;
+}
+function unsavedAttempt(){return Boolean(pendingAttempt&&!attemptSaved);}
+function selectProfile(id){
+  if(examActive||unsavedAttempt())return;
+  try{
+    const profile=readProfiles().find(p=>p.id===id);
+    if(!profile)throw new Error("Профиль не найден. Выбери его из актуального списка.");
+    activeProfile=profile;profilePickerOpen=false;profileMessage="";profileDraft="";
+    mode="exam";topic="Все темы";start();window.scrollTo(0,0);
+  }catch(error){profileMessage=storageError(error);render();}
+}
+function validAttempt(record){
+  return record&&record.version===1&&typeof record.id==="string"&&typeof record.profileId==="string"&&typeof record.completedAt==="string"&&Number.isFinite(Date.parse(record.completedAt))&&record.total===EXAM_COUNT&&Array.isArray(record.answers)&&record.answers.length===EXAM_COUNT&&record.answers.every(a=>a&&typeof a.question==="string"&&a.question.length>0&&typeof a.topic==="string"&&typeof a.correct==="boolean"&&typeof a.uncertain==="boolean")&&new Set(record.answers.map(a=>a.question)).size===EXAM_COUNT&&record.score===record.answers.filter(a=>a.correct).length;
+}
+function readAttempts(profileId){
+  const attempts=[],keys=[];let unreadable=0;
+  for(let n=0;n<localStorage.length;n++){const key=localStorage.key(n);if(key?.startsWith(ATTEMPT_PREFIX))keys.push(key);}
+  for(const key of keys){
+    try{
+      const record=JSON.parse(localStorage.getItem(key));
+      if(!validAttempt(record)||key!==ATTEMPT_PREFIX+record.id){unreadable++;continue;}
+      if(record.profileId===profileId)attempts.push(record);
+    }catch{unreadable++;}
+  }
+  attempts.sort((a,b)=>Date.parse(b.completedAt)-Date.parse(a.completedAt)||b.id.localeCompare(a.id));
+  return {attempts,unreadable};
+}
+function saveCompletedAttempt(){
+  if(attemptSaved||examResults.length!==EXAM_COUNT||!examOwner||!examId)return;
+  if(!pendingAttempt){
+    pendingAttempt={version:1,id:examId,profileId:examOwner.id,startedAt:examStartedAt,completedAt:new Date().toISOString(),score:examResults.filter(r=>r.correct).length,total:EXAM_COUNT,answers:examResults.map(r=>({question:r.card.q,topic:r.card.topic,correct:r.correct,uncertain:Boolean(keyNote(r.card))}))};
+  }
+  try{
+    if(!validAttempt(pendingAttempt))throw new Error("Попытка не прошла проверку целостности. Она пока не сохранена.");
+    if(!readProfiles().some(p=>p.id===examOwner.id))throw new Error("Профиль этой попытки не найден в хранилище. Результат пока не сохранён.");
+    const key=ATTEMPT_PREFIX+pendingAttempt.id,value=JSON.stringify(pendingAttempt),existing=localStorage.getItem(key);
+    if(existing!==null&&existing!==value)throw new Error("Обнаружена другая запись с тем же номером попытки. Существующий результат не изменён.");
+    if(existing===null)localStorage.setItem(key,value);
+    attemptSaved=true;attemptSaveError="";
+  }catch(error){attemptSaveError=storageError(error);}
+}
+function aggregateAttempts(attempts){
+  const questions=new Map(),topics=new Map(TOPICS.slice(1).map(name=>[name,{name,wrong:0,total:0,uncertain:0}]));
+  for(const attempt of attempts){
+    for(const answer of attempt.answers){
+      if(!questions.has(answer.question))questions.set(answer.question,{name:answer.question,topic:answer.topic,wrong:0,total:0,uncertain:0});
+      if(!topics.has(answer.topic))topics.set(answer.topic,{name:answer.topic,wrong:0,total:0,uncertain:0});
+      for(const entry of [questions.get(answer.question),topics.get(answer.topic)]){
+        entry.total++;if(!answer.correct)entry.wrong++;if(answer.uncertain)entry.uncertain++;
+      }
+    }
+  }
+  const rank=(a,b)=>b.wrong-a.wrong||(b.total?b.wrong/b.total:0)-(a.total?a.wrong/a.total:0)||a.name.localeCompare(b.name,"ru");
+  return {questions:[...questions.values()].filter(q=>q.wrong>0).sort(rank),topics:[...topics.values()].sort(rank)};
+}
+function readableDate(value){return new Date(value).toLocaleString("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});}
+function renderProfileChrome(){
+  const choosing=!activeProfile||profilePickerOpen,stats=mode==="stats";
+  document.getElementById("modes").hidden=choosing;
+  document.getElementById("profile-toolbar").hidden=choosing;
+  document.getElementById("active-profile-name").textContent=activeProfile?"Профиль: "+activeProfile.name:"";
+  document.getElementById("change-profile").disabled=examActive||unsavedAttempt();
+  document.querySelector(".bar").hidden=choosing||stats;
+  document.querySelector(".stat").hidden=choosing||stats;
+  document.getElementById("topics").hidden=choosing||stats||mode==="exam";
+  document.querySelectorAll("#modes button").forEach(button=>{button.classList.toggle("on",button.dataset.m===mode);button.disabled=unsavedAttempt();});
+}
+function renderProfiles(){
+  const main=document.getElementById("main");let profiles=[],loadError="";
+  try{profiles=readProfiles();}catch(error){loadError=storageError(error);}
+  main.innerHTML='<section class="exam-panel"><h2>Кто проходит тест?</h2><p class="exam-note">Выбери профиль или создай новый. История и статистика у каждого свои.</p><div class="profile-list" id="profile-list"></div><div class="flag profile-error" id="profile-message" role="alert" hidden></div><form class="profile-form" id="profile-form"><h3>Новый профиль</h3><label for="profile-name">Имя</label><input class="exam-input" id="profile-name" type="text" maxlength="40" autocomplete="off" required><button class="next" type="submit">Создать профиль</button></form><p class="exam-note">Профили без паролей, только в этом браузере. Между телефоном и компьютером история не синхронизируется. Очистка данных браузера удалит сохранённые профили и результаты.</p>'+(activeProfile?'<button class="ghost" id="back-to-profile">Вернуться в свой профиль</button>':'')+'</section>';
+  const list=document.getElementById("profile-list");
+  profiles.forEach(profile=>{
+    const button=document.createElement("button");button.className="profile-choice";
+    button.innerHTML='<strong>'+esc(profile.name)+'</strong><span>'+(profile.id===activeProfile?.id?'Текущий профиль':'Открыть профиль')+'</span>';
+    button.onclick=()=>selectProfile(profile.id);list.appendChild(button);
+  });
+  const message=document.getElementById("profile-message");message.textContent=loadError||profileMessage;message.hidden=!message.textContent;
+  const input=document.getElementById("profile-name");input.value=profileDraft;input.disabled=Boolean(loadError);
+  document.getElementById("profile-form").onsubmit=event=>{
+    event.preventDefault();if(examActive||unsavedAttempt())return;
+    profileDraft=input.value;
+    try{const profile=addProfile(profileDraft);selectProfile(profile.id);}catch(error){profileMessage=storageError(error);render();}
+  };
+  if(activeProfile)document.getElementById("back-to-profile").onclick=()=>{profilePickerOpen=false;profileMessage="";render();};
+}
+function rankingHTML(entry,index,isQuestion){
+  const percent=entry.total?Math.round(entry.wrong/entry.total*100):0;
+  return '<li class="ranking-row"><strong>'+(isQuestion?index+1+'. ':'')+esc(entry.name)+'</strong>'+(isQuestion?'<p class="exam-note">'+esc(entry.topic)+'</p>':'')+'<p class="ranking-count">Ошибок: '+entry.wrong+' из '+entry.total+(entry.total?' ('+percent+'%)':' – ещё нет ответов')+'</p>'+(entry.uncertain?'<p class="exam-note">Есть ответы по спорному ключу: '+entry.uncertain+'.</p>':'')+'<div class="rank-meter" aria-hidden="true"><span style="width:'+percent+'%"></span></div></li>';
+}
+function renderStatistics(){
+  const main=document.getElementById("main");let data;
+  try{data=readAttempts(activeProfile.id);}catch(error){main.innerHTML='<section class="exam-panel"><h2>Статистика</h2><p class="flag">'+esc(storageError(error))+'</p><button class="ghost" id="retry-statistics">Попробовать снова</button></section>';document.getElementById("retry-statistics").onclick=render;return;}
+  const attempts=data.attempts,ranked=aggregateAttempts(attempts),best=attempts.length?Math.max(...attempts.map(a=>a.score)):0,average=attempts.length?(attempts.reduce((sum,a)=>sum+a.score,0)/attempts.length).toFixed(1):"0";
+  const history=attempts.map(attempt=>'<li class="history-row"><span>'+esc(readableDate(attempt.completedAt))+'</span><span class="history-score">'+attempt.score+' / '+attempt.total+'</span><span class="history-meta">'+Math.round(attempt.score/attempt.total*100)+'% правильных. '+(attempt.score>=EXAM_PASS?'Порог 25 достигнут.':'Порог 25 не достигнут.')+'</span></li>').join("");
+  main.innerHTML='<section class="exam-panel"><h2>Статистика: '+esc(activeProfile.name)+'</h2><p class="exam-note">Только завершённые попытки на 54 вопроса и первые ответы до показа пояснения. Тесты по темам и карточки сюда не входят.</p>'+(data.unreadable?'<p class="flag">Не удалось прочитать записей: '+data.unreadable+'. Они не изменены; ниже показаны доступные результаты.</p>':'')+'<div class="stats-cards"><div class="stats-card"><strong>'+attempts.length+'</strong><span>Пройдено тестов</span></div><div class="stats-card"><strong>'+(attempts.length?best+' / 54':'Нет')+'</strong><span>Лучший результат</span></div><div class="stats-card"><strong>'+(attempts.length?average.replace('.',','):'Нет')+'</strong><span>Средний балл из 54</span></div></div><button class="next" id="stats-start-exam">Начать тест на 54 вопроса</button><section class="stats-section"><h3>История тестов</h3>'+(attempts.length?'<ol class="history-list">'+history+'</ol>':'<p class="exam-note">Пока нет завершённых попыток. После проверки 54-го ответа результат появится здесь.</p>')+'</section><section class="stats-section"><h3>Темы с наибольшим числом ошибок</h3><ul class="ranking-list">'+ranked.topics.map((entry,index)=>rankingHTML(entry,index,false)).join("")+'</ul></section><section class="stats-section"><h3>Вопросы с наибольшим числом ошибок</h3><p class="exam-note">Сначала большее число ошибок, при равенстве – большая доля ошибок. Частота выпадения вопросов учитывается в показателе «ошибок из ответов».</p>'+(ranked.questions.length?'<ol class="ranking-list">'+ranked.questions.map((entry,index)=>rankingHTML(entry,index,true)).join("")+'</ol>':'<p class="exam-note">'+(attempts.length?'В завершённых попытках ошибок нет.':'Рейтинг появится после первого завершённого теста с ошибками.')+'</p>')+'</section></section>';
+  document.getElementById("stats-start-exam").onclick=()=>changeMode("exam");
+}
+function saveStatusHTML(){
+  if(!pendingAttempt)return "";
+  if(attemptSaved)return '<p class="save-status saved" role="status">Результат сохранён в профиле «'+esc(examOwner.name)+'».</p>';
+  return '<div class="save-status flag" role="alert"><strong>Результат пока не сохранён.</strong><p>'+esc(attemptSaveError)+'</p><p>Не закрывай страницу. Можно повторить сохранение.</p><button class="small-button" id="retry-save">Повторить сохранение</button></div>';
+}
+function bindSaveRetry(){const button=document.getElementById("retry-save");if(button)button.onclick=()=>{saveCompletedAttempt();render();};}
+function changeMode(nextMode){
+  if(!activeProfile||profilePickerOpen||unsavedAttempt()||!["exam","quiz","cards","stats"].includes(nextMode)||nextMode===mode)return;
+  if(examActive&&examResults.length<EXAM_COUNT&&!window.confirm("Прервать пробный тест? Незавершённая попытка не попадёт в статистику."))return;
+  examActive=false;mode=nextMode;start();window.scrollTo(0,0);
+}
+
+function shuffle(a){a=a.slice();for(let j=a.length-1;j>0;j--){const k=Math.floor(Math.random()*(j+1));[a[j],a[k]]=[a[k],a[j]];}return a;}
+function poolOf(){return topic==="Все темы"?DATA:DATA.filter(d=>d.topic===topic);}
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+function prep(card){spec=card._spec;picked=new Set();answered=false;revealed=false;shown=spec?shuffle(spec.pool):[];}
+function start(){if(!activeProfile||profilePickerOpen||mode==="stats"||unsavedAttempt()){render();return;}if(mode==="exam"){examActive=false;examFinished=false;examResults=[];examDraft="";examFeedback=null;pendingAttempt=null;attemptSaved=false;attemptSaveError="";deck=[];i=0;score=0;wrong=[];total=EXAM_COUNT;render();return;}deck=shuffle(poolOf());i=0;score=0;wrong=[];mastered=0;total=deck.length;repeat=[];cardRevealed=false;if(deck.length)prep(deck[i]);render();}
+function startList(list){deck=shuffle(list);i=0;score=0;wrong=[];total=deck.length;if(deck.length)prep(deck[i]);render();}
+
+function renderTopics(){const c=document.getElementById("topics");c.innerHTML="";TOPICS.forEach(t=>{const b=document.createElement("div");const n=t==="Все темы"?DATA.length:DATA.filter(d=>d.topic===t).length;b.className="chip"+(t===topic?" on":"");b.textContent=t+" ("+n+")";b.onclick=()=>{topic=t;start();};c.appendChild(b);});}
+function bar(){const done=mode==="quiz"?(i+(answered||revealed?1:0)):mastered;const pct=total?Math.round(done/total*100):0;document.getElementById("prog").style.width=pct+"%";if(mode==="quiz"){document.getElementById("left").textContent="Вопрос "+Math.min(i+1,total)+" / "+total;document.getElementById("sc").textContent="Верно: "+score;}else{document.getElementById("left").textContent="Осталось: "+(deck.length-i+repeat.length);document.getElementById("sc").textContent="Выучено: "+mastered+" / "+total;}}
+function setEqual(a,b){if(a.size!==b.size)return false;for(const x of a)if(!b.has(x))return false;return true;}
+
+function render(){
+  renderProfileChrome();
+  if(!activeProfile||profilePickerOpen){document.querySelector(".tiny").textContent="Локальные профили и история в этом браузере.";return renderProfiles();}
+  if(mode==="stats"){document.querySelector(".tiny").textContent="Статистика по ключу тренажёра. Спорные ключи отмечены отдельно.";return renderStatistics();}
+  document.querySelector(".tiny").textContent=mode==="exam"?"Пробный тест по имеющемуся банку вопросов. Порог: 25 из 54.":trainingFooter;
+  document.getElementById("topics").hidden=mode==="exam";
+  if(mode==="exam")return renderExam();
+  renderTopics();bar();
+  const m=document.getElementById("main");
+  if(i>=deck.length){if(mode==="cards"&&repeat.length){deck=shuffle(repeat);repeat=[];i=0;cardRevealed=false;return render();}return done();}
+  const card=deck[i];m.innerHTML="";
+  const badge='<div class="badge">'+card.topic+'</div>';
+  const q='<div class="q">'+esc(card.q)+'</div>';
+  if(mode==="cards")return renderCard(m,card,badge,q);
+  if(!spec)return renderFill(m,card,badge,q);
+
+  m.insertAdjacentHTML("beforeend",badge);
+  if(spec.multi)m.insertAdjacentHTML("beforeend",q+'<div class="hintmulti">Выберите один или несколько вариантов, затем «Проверить».</div>');
+  else m.insertAdjacentHTML("beforeend",q);
+
+  const box=document.createElement("div");box.className="opts";
+  shown.forEach((o,idx)=>{
+    const b=document.createElement("button");b.className="opt";
+    const isCorrect=spec.correct.has(o),isSel=picked.has(o);let icon,tag="";
+    if(!answered){icon=isSel?"●":String.fromCharCode(65+idx);if(isSel)b.classList.add("sel");}
+    else{
+      if(isCorrect&&isSel){b.classList.add("correct");icon="✓";tag='<span class="tag">верно</span>';}
+      else if(isCorrect&&!isSel){b.classList.add("missed");icon="◌";tag='<span class="tag">пропущено</span>';}
+      else if(!isCorrect&&isSel){b.classList.add("wrong");icon="✗";tag='<span class="tag">ваш выбор</span>';}
+      else{b.classList.add("dim");icon=String.fromCharCode(65+idx);}
+    }
+    b.innerHTML='<span class="ic">'+icon+'</span><span><span class="txt">'+esc(o)+'</span>'+tag+'</span>';
+    if(!answered)b.onclick=()=>{if(spec.multi){if(picked.has(o))picked.delete(o);else picked.add(o);render();}else{picked=new Set([o]);grade(card);}};
+    box.appendChild(b);
+  });
+  m.appendChild(box);
+
+  if(!answered&&spec.multi){const ck=document.createElement("button");ck.className="check";ck.textContent="Проверить";if(picked.size===0)ck.disabled=true;ck.onclick=()=>grade(card);m.appendChild(ck);}
+  if(answered){m.insertAdjacentHTML("beforeend",explanationHTML(card));const nx=document.createElement("button");nx.className="next";nx.textContent=(i+1>=deck.length)?"Показать результат →":"Дальше →";nx.onclick=advance;m.appendChild(nx);}
+}
+
+function grade(card){answered=true;if(setEqual(picked,spec.correct))score++;else wrong.push(card);render();}
+function advance(){i++;if(i<deck.length)prep(deck[i]);answered=false;revealed=false;render();}
+
+function renderFill(m,card,badge,q){
+  m.insertAdjacentHTML("beforeend",badge+q+'<div class="hintmulti">Вопрос с вводом термина (вариантов нет). Вспомните ответ и проверьте себя.</div>');
+  if(!revealed){const rb=document.createElement("button");rb.className="reveal-btn";rb.textContent="Показать ответ";rb.onclick=()=>{revealed=true;render();};m.appendChild(rb);}
+  else{
+    const box=document.createElement("div");box.className="ansbox";box.innerHTML='<div class="lab">Ответ:</div><div class="val">'+esc(card.a)+'</div>';m.appendChild(box);
+    m.insertAdjacentHTML("beforeend",explanationHTML(card));
+    const row=document.createElement("div");row.className="selfrow";
+    const y=document.createElement("button");y.className="self-yes";y.textContent="Знал ✓";y.onclick=()=>{score++;advance();};
+    const n=document.createElement("button");n.className="self-no";n.textContent="Не знал ✗";n.onclick=()=>{wrong.push(card);advance();};
+    row.appendChild(y);row.appendChild(n);m.appendChild(row);
+  }
+}
+
+function renderCard(m,card,badge,q){
+  const wrap=document.createElement("div");wrap.className="card";wrap.onclick=()=>{if(!cardRevealed){cardRevealed=true;render();}};
+  let inner=badge+q;
+  if(!cardRevealed){inner+='<div class="hint">👆 нажми, чтобы увидеть ответ</div>';wrap.innerHTML=inner;m.appendChild(wrap);}
+  else{
+    const mk=card.flag?"⚠":"✓";
+    inner+='<div class="ans"><div class="lab">'+mk+' Ответ'+(card.flag?" (требует проверки)":"")+':</div><div class="val">'+esc(card.a)+'</div>';
+    inner+=explanationHTML(card);
+    inner+='</div>';wrap.innerHTML=inner;m.appendChild(wrap);
+    const btns=document.createElement("div");btns.className="btns";
+    const k=document.createElement("button");k.className="btn know";k.textContent="Знаю ✓";k.onclick=e=>{e.stopPropagation();mastered++;i++;cardRevealed=false;render();};
+    const a=document.createElement("button");a.className="btn again";a.textContent="Повторить ↺";a.onclick=e=>{e.stopPropagation();repeat.push(card);i++;cardRevealed=false;render();};
+    btns.appendChild(k);btns.appendChild(a);m.appendChild(btns);
+  }
+}
+
+function done(){
+  bar();const m=document.getElementById("main");
+  if(mode==="quiz"){
+    const pct=total?Math.round(score/total*100):0;
+    const msg=pct>=85?"Отлично! Готов к тесту 💪":pct>=65?"Хорошо, но повтори ошибки.":"Нужно ещё повторить — не сдавайся!";
+    m.innerHTML='<div class="done"><h2>Результат темы «'+topic+'»</h2><div class="score">'+score+' / '+total+'</div><p>'+pct+'% правильных. '+msg+'</p>'+(wrong.length?'<button class="restart" id="rw">Повторить ошибки ('+wrong.length+') 🔁</button>':'')+'<button class="ghost" id="rs">Пройти тему заново</button></div>';
+    if(wrong.length)document.getElementById("rw").onclick=()=>{const w=wrong.slice();startList(w);};
+    document.getElementById("rs").onclick=start;
+  }else{
+    m.innerHTML='<div class="done"><h2>🎉 Тема «'+topic+'» пройдена!</h2><p>Все '+total+' карточек просмотрены.</p><button class="restart" id="rs">Пройти заново 🔁</button></div>';
+    document.getElementById("rs").onclick=start;
+  }
+}
+
+function isExamText(card){return !card._spec||/^Термин[:,]/i.test(card.q)||/введите термин/i.test(card.q);}
+function keyNote(card){return [card.flag?card.n||"Ответ требует проверки.":"",EXPLANATIONS.get(card.q)?.note||""].filter(Boolean).join(" ");}
+function explanationHTML(card){
+  const explanation=EXPLANATIONS.get(card.q);
+  if(!explanation)return '<div class="flag">Пояснение к этому вопросу ещё не добавлено.</div>';
+  const note=keyNote(card),source=explanation.source;
+  return '<div class="explanation"><h4>Почему так</h4><p>'+esc(explanation.why)+'</p>'+(note?'<div class="flag"><strong>Спорный ключ.</strong> '+esc(note)+'</div>':'')+(source?'<p class="exam-note">Источник: <a href="'+esc(source.url)+'" target="_blank" rel="noopener noreferrer">'+esc(source.label)+'</a></p>':'')+'</div>';
+}
+function answerDetailsHTML(result){
+  const card=result.card,response=Array.isArray(result.response)?result.response.join(" + "):result.response;
+  let details='<p><strong>Твой ответ:</strong> '+esc(response||"Нет ответа")+'</p><p><strong>'+(keyNote(card)?'Ответ по текущему ключу:':'Правильный ответ:')+'</strong> '+esc(card.a)+'</p>';
+  if(Array.isArray(result.response)&&!result.correct){
+    const selected=new Set(result.response),extra=result.response.filter(value=>!card._spec.correct.has(value)),missed=[...card._spec.correct].filter(value=>!selected.has(value));
+    if(extra.length)details+='<p><strong>Лишние варианты:</strong> '+extra.map(esc).join("; ")+'</p>';
+    if(missed.length)details+='<p><strong>Не выбраны:</strong> '+missed.map(esc).join("; ")+'</p>';
+  }
+  return details+explanationHTML(card);
+}
+function normalizeTerm(value){return String(value).toLowerCase().replace(/ё/g,"е").replace(/[^\p{L}\p{N}]+/gu," ").trim();}
+function acceptsTerm(card,value){
+  const answer=normalizeTerm(value);
+  if(!answer)return false;
+  const aliases={
+    "Искусственный интеллект":["ИИ"],
+    "Знания":["Знание"],
+    "Правила":["Правило"],
+    "Вывод (логический вывод)":["Вывод","Логический вывод"],
+    "Скрипт (фрейм-сценарий)":["Скрипт","Фрейм-сценарий"],
+    "Компьютерная наука (в общем)":["Компьютерная наука"],
+    "Оценочная функция":["Функция оценки"]
+  };
+  const accepted=[card.a,...(aliases[card.a]||[])];
+  if(card.a.endsWith(" направление"))accepted.push(card.a.replace(/ направление$/,""));
+  return accepted.some(term=>normalizeTerm(term)===answer);
+}
+function beginExam(){
+  if(!activeProfile||profilePickerOpen||examActive||unsavedAttempt())return;
+  examOwner={id:activeProfile.id,name:activeProfile.name};examId=newId();examStartedAt=new Date().toISOString();
+  pendingAttempt=null;attemptSaved=false;attemptSaveError="";
+  deck=shuffle(DATA).slice(0,EXAM_COUNT);
+  i=0;score=0;wrong=[];total=deck.length;examResults=[];examDraft="";examFeedback=null;
+  examActive=true;examFinished=false;prep(deck[0]);render();
+}
+function submitExam(skip=false){
+  if(!examActive||i>=deck.length||examFeedback)return;
+  const card=deck[i],textAnswer=isExamText(card);
+  if(!skip&&(textAnswer?!examDraft.trim():!picked.size))return;
+  const response=skip?(textAnswer?"":[]):textAnswer?examDraft.trim():Array.from(picked);
+  const correct=!skip&&(textAnswer?acceptsTerm(card,response):setEqual(new Set(response),card._spec.correct));
+  examFeedback={card,response,correct,number:i+1};
+  examResults.push(examFeedback);
+  if(correct)score++;else wrong.push(card);
+  if(skip){examDraft="";picked=new Set();}
+  if(examResults.length===EXAM_COUNT)saveCompletedAttempt();
+  render();document.getElementById("exam-feedback").focus();
+}
+function nextExam(){
+  if(!examActive||!examFeedback)return;
+  i++;examDraft="";examFeedback=null;
+  if(i===deck.length){examActive=false;examFinished=true;}
+  else prep(deck[i]);
+  render();window.scrollTo(0,0);
+}
+function renderExam(){
+  const m=document.getElementById("main");
+  document.getElementById("prog").style.width=(examResults.length/EXAM_COUNT*100)+"%";
+  document.getElementById("left").textContent=examActive?"Вопрос "+(i+1)+" / "+total:examFinished?"Завершено: "+total+" / "+total:"54 случайных вопроса";
+  document.getElementById("sc").textContent=examActive?"Верно: "+score+" из "+examResults.length:examFinished?"Верно: "+score:"Порог: 25";
+  if(examFinished)return renderExamResult(m);
+  if(!examActive){
+    m.innerHTML='<section class="exam-panel exam-intro"><h2>54 вопроса с пояснениями</h2><p>54 случайных вопроса из '+DATA.length+' по всем темам, без повторов внутри попытки.</p><ul><li>Выбирай варианты или вводи термин, затем нажимай «Проверить».</li><li>Увидишь результат и пояснение к каждому ответу. Прочитай разбор и нажми «Далее».</li><li>За полностью правильный ответ – 1 балл. Для нескольких вариантов нужны все верные и ни одного лишнего.</li><li>«Не знаю» открывает пояснение и засчитывается как ошибка.</li></ul><p>Проходной результат: <strong>25 из 54</strong>. В итог входят только первые ответы до показа пояснений.</p><p class="exam-note">Завершённая попытка сохранится в профиле «'+esc(activeProfile.name)+'» и появится в статистике.</p><button class="next" id="begin-exam">Начать пробный тест</button><p class="exam-note">Это тренировка с обратной связью: пояснения могут помочь с последующими вопросами. Незавершённая попытка при обновлении или закрытии страницы сбросится.</p></section>';
+    document.getElementById("begin-exam").onclick=beginExam;
+    return;
+  }
+  const card=deck[i];
+  m.innerHTML='<section class="exam-panel" id="exam-question"><div class="badge">'+esc(card.topic)+'</div><h2 class="q" id="exam-question-text">'+esc(card.q)+'</h2></section>';
+  const panel=document.getElementById("exam-question");
+  let input=null;
+  if(isExamText(card)){
+    panel.insertAdjacentHTML("beforeend",'<label class="hintmulti" for="exam-term">Введите ответ</label><input class="exam-input" id="exam-term" type="text" autocomplete="off" spellcheck="false" aria-labelledby="exam-question-text"><p class="exam-note">Регистр, лишние пробелы и различие е/ё не влияют на проверку.</p>');
+    input=document.getElementById("exam-term");input.value=examDraft;input.disabled=Boolean(examFeedback);
+  }else{
+    panel.insertAdjacentHTML("beforeend",'<p class="hintmulti">'+(spec.multi?'Выберите один или несколько вариантов.':'Выберите один вариант.')+'</p>');
+    const options=document.createElement("div");options.className="opts";
+    shown.forEach((option,index)=>{
+      const selected=picked.has(option),button=document.createElement("button");
+      button.className="opt"+(selected?" sel":"");button.setAttribute("aria-pressed",String(selected));
+      let label="";
+      if(examFeedback){
+        button.disabled=true;
+        if(spec.correct.has(option)){button.classList.add(selected?"correct":"missed");label=selected?"Верный вариант, выбран":"Верный вариант, не выбран";}
+        else if(selected){button.classList.add("wrong");label="Лишний вариант";}
+        else button.classList.add("dim");
+      }
+      button.innerHTML='<span class="ic" aria-hidden="true">'+(selected?'●':String.fromCharCode(65+index))+'</span><span><span class="txt">'+esc(option)+'</span>'+(label?'<span class="tag">'+label+'</span>':'')+'</span>';
+      if(!examFeedback)button.onclick=()=>{if(examFeedback)return;if(spec.multi){if(picked.has(option))picked.delete(option);else picked.add(option);}else picked=new Set([option]);renderExam();};
+      options.appendChild(button);
+    });
+    panel.appendChild(options);
+  }
+  const actions=document.createElement("div");actions.className="exam-actions";
+  if(examFeedback){
+    const status=(examFeedback.correct?'Верно':'Неверно')+(keyNote(card)?' по текущему ключу':'');
+    panel.insertAdjacentHTML("beforeend",'<section class="exam-feedback '+(examFeedback.correct?'is-correct':'is-wrong')+'" id="exam-feedback" tabindex="-1" aria-labelledby="feedback-title"><h3 id="feedback-title">'+status+'</h3>'+answerDetailsHTML(examFeedback)+'</section>');
+    if(pendingAttempt){panel.insertAdjacentHTML("beforeend",saveStatusHTML());bindSaveRetry();}
+    const next=document.createElement("button");next.className="next";next.id="exam-next";
+    next.textContent=i+1===total?"Посмотреть итог":"Далее";next.onclick=nextExam;
+    actions.appendChild(next);
+  }else{
+    const check=document.createElement("button");check.className="next";check.id="exam-check";check.textContent="Проверить";
+    check.disabled=isExamText(card)?!examDraft.trim():!picked.size;check.onclick=()=>submitExam();
+    const skip=document.createElement("button");skip.className="ghost";skip.id="exam-skip";skip.textContent="Не знаю";skip.onclick=()=>submitExam(true);
+    actions.appendChild(check);actions.appendChild(skip);
+    if(input){input.oninput=()=>{if(examFeedback)return;examDraft=input.value;check.disabled=!examDraft.trim();};input.onkeydown=e=>{if(e.key==="Enter"&&!e.isComposing){e.preventDefault();submitExam();}};}
+  }
+  panel.appendChild(actions);
+}
+function renderExamResult(m){
+  const passed=score>=EXAM_PASS,flagged=examResults.filter(result=>keyNote(result.card));
+  const topics=TOPICS.slice(1).map(name=>{
+    const results=examResults.filter(result=>result.card.topic===name);
+    return '<tr><th scope="row">'+esc(name)+'</th><td>'+results.filter(result=>result.correct).length+' / '+results.length+'</td></tr>';
+  }).join("");
+  const review=examResults.filter(result=>!result.correct||keyNote(result.card)).map(result=>{
+    return '<details class="exam-review"><summary>'+result.number+'. '+esc(result.card.q)+(result.correct?' (засчитано, спорный ключ)':'')+'</summary>'+answerDetailsHTML(result)+'</details>';
+  }).join("");
+  m.innerHTML='<section class="exam-panel"><div class="done"><h2>Результат пробного теста</h2><div class="score">'+score+' / '+total+'</div><p>'+Math.round(score/total*100)+'% правильных по ключу тренажёра.</p><p><strong>'+(passed?'Порог 25 достигнут.':'Порог 25 пока не достигнут.')+'</strong></p>'+saveStatusHTML()+'<button class="restart" id="new-exam">Новая попытка</button><button class="ghost" id="result-statistics">Статистика профиля</button></div><table class="topic-results"><caption>Результат по темам</caption><thead><tr><th scope="col">Тема</th><th scope="col">Верно / всего</th></tr></thead><tbody>'+topics+'</tbody></table>'+(flagged.length?'<p class="flag">В этой попытке вопросов со спорным ключом: '+flagged.length+'. Они учтены по текущему ключу и включены в разбор ниже.</p>':'')+'<h2>Ошибки: '+wrong.length+'</h2><p class="exam-note">'+(review?'Нажми на вопрос, чтобы сравнить свой ответ с ключом.':'Все ответы совпали с ключом тренажёра.')+'</p>'+review+'</section>';
+  const again=document.getElementById("new-exam"),statistics=document.getElementById("result-statistics");
+  again.disabled=unsavedAttempt();again.onclick=()=>{beginExam();window.scrollTo(0,0);};
+  statistics.disabled=unsavedAttempt();statistics.onclick=()=>changeMode("stats");bindSaveRetry();
+}
+
+document.getElementById("modes").addEventListener("click",e=>{const b=e.target.closest("button");if(b)changeMode(b.dataset.m);});
+document.getElementById("change-profile").onclick=()=>{if(examActive||unsavedAttempt())return;profilePickerOpen=true;profileMessage="";profileDraft="";render();window.scrollTo(0,0);};
+window.addEventListener("beforeunload",e=>{if((examActive&&examResults.length<EXAM_COUNT)||unsavedAttempt()){e.preventDefault();e.returnValue="";}});
+window.addEventListener("storage",e=>{if((e.key===PROFILE_STORE||e.key?.startsWith(ATTEMPT_PREFIX))&&!examActive&&!unsavedAttempt()&&(mode==="stats"||profilePickerOpen||!activeProfile))render();});
+start();
+</script>
+</body>
+</html>
